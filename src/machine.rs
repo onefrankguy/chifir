@@ -112,6 +112,18 @@ impl Machine {
                 self.counter += 4;
             },
 
+            // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
+            12 => {
+                let b = self.memory[b as usize];
+                let c = self.memory[c as usize];
+                if b < c {
+                  self.memory[a as usize] = 1;
+                } else {
+                  self.memory[a as usize] = 0;
+                }
+                self.counter += 4;
+            },
+
             // Unknown opcode
             _ => {
             },
@@ -255,6 +267,28 @@ mod tests {
         assert_eq!(0, m.loc());
         m.exec(11, 0, 1, 2);
         assert_eq!(Some(&2), m.dump().first());
+        assert_eq!(4, m.loc());
+    }
+
+    #[test]
+    fn it_runs_opcode_12_then_branch() {
+        let mut m = Machine::with_data(vec![2, 3, 4]);
+
+        assert_eq!(Some(&2), m.dump().first());
+        assert_eq!(0, m.loc());
+        m.exec(12, 0, 1, 2);
+        assert_eq!(Some(&1), m.dump().first());
+        assert_eq!(4, m.loc());
+    }
+
+    #[test]
+    fn it_runs_opcode_12_else_branch() {
+        let mut m = Machine::with_data(vec![2, 4, 3]);
+
+        assert_eq!(Some(&2), m.dump().first());
+        assert_eq!(0, m.loc());
+        m.exec(12, 0, 1, 2);
+        assert_eq!(Some(&0), m.dump().first());
         assert_eq!(4, m.loc());
     }
 }
