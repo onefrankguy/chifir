@@ -41,7 +41,7 @@ impl Machine {
         self.exec(opcode, a, b, c);
     }
 
-    pub fn exec(&mut self, opcode: u32, a: u32, b: u32, c: u32) {
+    fn exec(&mut self, opcode: u32, a: u32, b: u32, c: u32) {
         match opcode {
             // PC <- M[A]
             1 => {
