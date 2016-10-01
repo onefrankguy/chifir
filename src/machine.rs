@@ -262,12 +262,12 @@ mod tests {
 
     #[test]
     fn it_runs_opcode_10() {
-        let mut m = Machine::with_data(vec![1, 6, 2]);
+        // M[A] <- M[B] / M[C]
+        let mut m = Machine::with_data(vec![10, 4, 5, 6, 0, 11, 2]);
 
-        assert_eq!(Some(&1), m.dump().first());
         assert_eq!(0, m.loc());
-        m.exec(10, 0, 1, 2);
-        assert_eq!(Some(&3), m.dump().first());
+        m.step();
+        assert_eq!(&vec![10, 4, 5, 6, 5, 11, 2], m.dump());
         assert_eq!(4, m.loc());
     }
 
