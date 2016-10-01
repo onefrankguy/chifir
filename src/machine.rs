@@ -63,7 +63,7 @@ mod tests {
     use super::Machine;
 
     #[test]
-    fn it_can_load_data() {
+    fn it_loads_data() {
         let mut m = Machine::new();
         assert_eq!(Some(&0), m.dump().first());
 
@@ -72,7 +72,7 @@ mod tests {
     }
 
     #[test]
-    fn it_can_run_opcode_1() {
+    fn it_runs_opcode_1() {
         let mut m = Machine::with_data(vec![0, 2]);
 
         assert_eq!(0, m.loc());
