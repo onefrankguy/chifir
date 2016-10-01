@@ -13,6 +13,13 @@ impl Machine {
         }
     }
 
+    pub fn with_data(data: Vec<u32>) -> Machine {
+        Machine {
+            memory: data,
+            counter: 0,
+        }
+    }
+
     pub fn loc(&self) -> u32 {
         self.counter
     }
@@ -66,41 +73,36 @@ mod tests {
 
     #[test]
     fn it_can_run_opcode_1() {
-        let mut m = Machine::new();
-        assert_eq!(0, m.loc());
+        let mut m = Machine::with_data(vec![0, 2]);
 
-        m.load(vec![0, 2]);
+        assert_eq!(0, m.loc());
         m.exec(1, 1, 0);
         assert_eq!(2, m.loc());
     }
 
     #[test]
     fn it_runs_opcode_2_if() {
-        let mut m = Machine::new();
-        assert_eq!(0, m.loc());
+        let mut m = Machine::with_data(vec![0, 2]);
 
-        m.load(vec![0, 2]);
+        assert_eq!(0, m.loc());
         m.exec(2, 1, 0);
         assert_eq!(2, m.loc());
     }
 
     #[test]
     fn it_runs_opcode_2_else() {
-        let mut m = Machine::new();
-        assert_eq!(0, m.loc());
+        let mut m = Machine::with_data(vec![1, 2]);
 
-        m.load(vec![1, 2]);
+        assert_eq!(0, m.loc());
         m.exec(2, 1, 0);
         assert_eq!(0, m.loc());
     }
 
     #[test]
     fn it_runs_opcode_3() {
-        let mut m = Machine::new();
+        let mut m = Machine::with_data(vec![1]);
 
-        m.load(vec![1]);
         assert_eq!(Some(&1), m.dump().first());
-
         m.exec(3, 0, 0);
         assert_eq!(Some(&0), m.dump().first());
     }
