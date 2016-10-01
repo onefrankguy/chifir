@@ -230,22 +230,22 @@ mod tests {
     #[test]
     fn it_runs_opcode_7() {
         // M[A] <- M[B] + M[C]
-        let mut m = Machine::with_data(vec![7, 4, 2, 3, 0]);
+        let mut m = Machine::with_data(vec![7, 4, 5, 6, 0, 11, 2]);
 
         assert_eq!(0, m.loc());
         m.step();
-        assert_eq!(&vec![7, 4, 2, 3, 5], m.dump());
+        assert_eq!(&vec![7, 4, 5, 6, 13, 11, 2], m.dump());
         assert_eq!(4, m.loc());
     }
 
     #[test]
     fn it_runs_opcode_8() {
         // M[A] <- M[B] - M[C]
-        let mut m = Machine::with_data(vec![8, 4, 5, 6, 0, 3, 2]);
+        let mut m = Machine::with_data(vec![8, 4, 5, 6, 0, 11, 2]);
 
         assert_eq!(0, m.loc());
         m.step();
-        assert_eq!(&vec![8, 4, 5, 6, 1, 3, 2], m.dump());
+        assert_eq!(&vec![8, 4, 5, 6, 9, 11, 2], m.dump());
         assert_eq!(4, m.loc());
     }
 
