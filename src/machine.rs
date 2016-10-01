@@ -97,7 +97,7 @@ impl Machine {
                 self.counter += 4;
             },
 
-            // M[A] <- M[B] x M[C]
+            // M[A] <- M[B] * M[C]
             9 => {
                 let b = self.memory[b as usize];
                 let c = self.memory[c as usize];
@@ -251,12 +251,12 @@ mod tests {
 
     #[test]
     fn it_runs_opcode_9() {
-        let mut m = Machine::with_data(vec![1, 2, 3]);
+        // M[A] <- M[B] * M[C]
+        let mut m = Machine::with_data(vec![9, 4, 5, 6, 0, 11, 2]);
 
-        assert_eq!(Some(&1), m.dump().first());
         assert_eq!(0, m.loc());
-        m.exec(9, 0, 1, 2);
-        assert_eq!(Some(&6), m.dump().first());
+        m.step();
+        assert_eq!(&vec![9, 4, 5, 6, 22, 11, 2], m.dump());
         assert_eq!(4, m.loc());
     }
 
