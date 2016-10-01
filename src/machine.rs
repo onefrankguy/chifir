@@ -165,19 +165,21 @@ mod tests {
 
     #[test]
     fn it_runs_opcode_2_then_branch() {
-        let mut m = Machine::with_data(vec![0, 2]);
+        // If M[B] = 0, then PC <- M[A]
+        let mut m = Machine::with_data(vec![2, 4, 5, 0, 2, 0]);
 
         assert_eq!(0, m.loc());
-        m.exec(2, 1, 0, 0);
+        m.step();
         assert_eq!(2, m.loc());
     }
 
     #[test]
     fn it_runs_opcode_2_else_branch() {
-        let mut m = Machine::with_data(vec![1, 2]);
+        // If M[B] = 0, then PC <- M[A]
+        let mut m = Machine::with_data(vec![2, 4, 5, 0, 2, 1]);
 
         assert_eq!(0, m.loc());
-        m.exec(2, 1, 0, 0);
+        m.step();
         assert_eq!(0, m.loc());
     }
 
