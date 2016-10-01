@@ -52,6 +52,12 @@ impl Machine {
                 self.counter += 4;
             },
 
+            // M[A] <- M[B]
+            4 => {
+                self.memory[a as usize] = self.memory[b as usize];
+                self.counter += 4;
+            },
+
             // M[A] <- M[M[B]]
             5 => {
                 let b = self.memory[b as usize];
@@ -113,6 +119,17 @@ mod tests {
         assert_eq!(Some(&1), m.dump().first());
         assert_eq!(0, m.loc());
         m.exec(3, 0, 0);
+        assert_eq!(Some(&0), m.dump().first());
+        assert_eq!(4, m.loc());
+    }
+
+    #[test]
+    fn it_runs_opcode_4() {
+        let mut m = Machine::with_data(vec![1, 0]);
+
+        assert_eq!(Some(&1), m.dump().first());
+        assert_eq!(0, m.loc());
+        m.exec(4, 0, 1);
         assert_eq!(Some(&0), m.dump().first());
         assert_eq!(4, m.loc());
     }
