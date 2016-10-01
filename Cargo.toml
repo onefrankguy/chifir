@@ -1,0 +1,6 @@
+[package]
+name = "chifir"
+version = "0.1.0"
+authors = ["Frank Mitchell <me@frankmitchell.org>"]
+
+[dependencies]
