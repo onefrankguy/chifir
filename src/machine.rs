@@ -49,6 +49,7 @@ impl Machine {
             // M[A] <- PC
             3 => {
                 self.memory[a as usize] = self.counter;
+                self.counter += 4;
             },
 
             // Unknown opcode
@@ -103,7 +104,9 @@ mod tests {
         let mut m = Machine::with_data(vec![1]);
 
         assert_eq!(Some(&1), m.dump().first());
+        assert_eq!(0, m.loc());
         m.exec(3, 0, 0);
         assert_eq!(Some(&0), m.dump().first());
+        assert_eq!(4, m.loc());
     }
 }
