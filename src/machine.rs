@@ -32,7 +32,7 @@ impl Machine {
         self.memory = data;
     }
 
-    pub fn exec(&mut self, opcode: u32, a: u32, b: u32) {
+    pub fn exec(&mut self, opcode: u32, a: u32, b: u32, c: u32) {
         match opcode {
             // PC <- M[A]
             1 => {
@@ -72,6 +72,14 @@ impl Machine {
                 self.counter += 4;
             },
 
+            // M[A] <- M[B] + M[C]
+            7 => {
+                let b = self.memory[b as usize];
+                let c = self.memory[c as usize];
+                self.memory[a as usize] = b + c;
+                self.counter += 4;
+            },
+
             // Unknown opcode
             _ => {
             },
@@ -97,7 +105,7 @@ mod tests {
         let mut m = Machine::with_data(vec![0, 2]);
 
         assert_eq!(0, m.loc());
-        m.exec(1, 1, 0);
+        m.exec(1, 1, 0, 0);
         assert_eq!(2, m.loc());
     }
 
@@ -106,7 +114,7 @@ mod tests {
         let mut m = Machine::with_data(vec![0, 2]);
 
         assert_eq!(0, m.loc());
-        m.exec(2, 1, 0);
+        m.exec(2, 1, 0, 0);
         assert_eq!(2, m.loc());
     }
 
@@ -115,7 +123,7 @@ mod tests {
         let mut m = Machine::with_data(vec![1, 2]);
 
         assert_eq!(0, m.loc());
-        m.exec(2, 1, 0);
+        m.exec(2, 1, 0, 0);
         assert_eq!(0, m.loc());
     }
 
@@ -125,7 +133,7 @@ mod tests {
 
         assert_eq!(Some(&1), m.dump().first());
         assert_eq!(0, m.loc());
-        m.exec(3, 0, 0);
+        m.exec(3, 0, 0, 0);
         assert_eq!(Some(&0), m.dump().first());
         assert_eq!(4, m.loc());
     }
@@ -136,7 +144,7 @@ mod tests {
 
         assert_eq!(Some(&1), m.dump().first());
         assert_eq!(0, m.loc());
-        m.exec(4, 0, 1);
+        m.exec(4, 0, 1, 0);
         assert_eq!(Some(&0), m.dump().first());
         assert_eq!(4, m.loc());
     }
@@ -147,7 +155,7 @@ mod tests {
 
         assert_eq!(Some(&1), m.dump().first());
         assert_eq!(0, m.loc());
-        m.exec(5, 0, 1);
+        m.exec(5, 0, 1, 0);
         assert_eq!(Some(&0), m.dump().first());
         assert_eq!(4, m.loc());
     }
@@ -158,8 +166,19 @@ mod tests {
 
         assert_eq!(Some(&1), m.dump().first());
         assert_eq!(0, m.loc());
-        m.exec(6, 1, 1);
+        m.exec(6, 1, 1, 0);
         assert_eq!(Some(&0), m.dump().first());
+        assert_eq!(4, m.loc());
+    }
+
+    #[test]
+    fn it_runs_opcode_7() {
+        let mut m = Machine::with_data(vec![1, 2, 3]);
+
+        assert_eq!(Some(&1), m.dump().first());
+        assert_eq!(0, m.loc());
+        m.exec(7, 0, 1, 2);
+        assert_eq!(Some(&5), m.dump().first());
         assert_eq!(4, m.loc());
     }
 }
