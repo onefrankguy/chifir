@@ -284,23 +284,23 @@ mod tests {
 
     #[test]
     fn it_runs_opcode_12_then_branch() {
-        let mut m = Machine::with_data(vec![2, 3, 4]);
+        // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
+        let mut m = Machine::with_data(vec![12, 4, 5, 6, 2, 8, 9]);
 
-        assert_eq!(Some(&2), m.dump().first());
         assert_eq!(0, m.loc());
-        m.exec(12, 0, 1, 2);
-        assert_eq!(Some(&1), m.dump().first());
+        m.step();
+        assert_eq!(&vec![12, 4, 5, 6, 1, 8, 9], m.dump());
         assert_eq!(4, m.loc());
     }
 
     #[test]
     fn it_runs_opcode_12_else_branch() {
-        let mut m = Machine::with_data(vec![2, 4, 3]);
+        // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
+        let mut m = Machine::with_data(vec![12, 4, 5, 6, 2, 9, 8]);
 
-        assert_eq!(Some(&2), m.dump().first());
         assert_eq!(0, m.loc());
-        m.exec(12, 0, 1, 2);
-        assert_eq!(Some(&0), m.dump().first());
+        m.step();
+        assert_eq!(&vec![12, 4, 5, 6, 0, 9, 8], m.dump());
         assert_eq!(4, m.loc());
     }
 }
