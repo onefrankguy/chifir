@@ -156,7 +156,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_1() {
         // PC <- M[A]
-        let mut m = Machine::with_data(vec![1, 3, 0, 2]);
+        let mut m = Machine::with_data(vec![1, 4, 0, 0, 2]);
 
         assert_eq!(0, m.loc());
         m.step();
