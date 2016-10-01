@@ -7,24 +7,47 @@ fn main() {
     println!("");
     println!("Type 'help' to get started.");
 
+    let (tx, rx) = machine::spawn();
+
     loop {
         print!("> ");
         io::stdout().flush().unwrap();
 
         let mut command = String::new();
-        let (tx, rx) = machine::spawn();
 
         io::stdin().read_line(&mut command).expect("Failed to read command");
 
         match command.trim() {
-            "help" => println!("help, quit"),
+            "help" => {
+                println!("help, pause, resume, step, inspect, quit");
+            },
+
+            "pause" => {
+                tx.send(machine::Message::Pause).unwrap();
+            },
+
+            "resume" => {
+                tx.send(machine::Message::Resume).unwrap();
+            },
+
             "step" => {
                 tx.send(machine::Message::Step).unwrap();
                 tx.send(machine::Message::Inspect).unwrap();
                 println!("{}", rx.recv().unwrap());
             },
-            "quit" => break,
-            _ => continue
+
+            "inspect" => {
+                tx.send(machine::Message::Inspect).unwrap();
+                println!("{}", rx.recv().unwrap());
+            },
+
+            "quit" => {
+                break;
+            },
+
+            _ => {
+                continue;
+            }
         }
     }
 }

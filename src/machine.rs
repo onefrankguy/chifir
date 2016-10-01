@@ -3,6 +3,8 @@ use std::thread;
 use std::sync::mpsc;
 
 pub enum Message {
+    Pause,
+    Resume,
     Step,
     Inspect,
 }
@@ -12,22 +14,39 @@ pub fn spawn() -> (mpsc::Sender<Message>, mpsc::Receiver<String>) {
     let (tx_data, rx_data) = mpsc::channel();
 
     thread::spawn(move || {
-        let mut m = Machine::new();
+        let mut computer = Machine::new();
+        let mut paused = false;
 
         loop {
             let message = rx_message.try_recv();
             if message.is_ok() {
                 match message.unwrap() {
+                    Message::Pause => {
+                        paused = true;
+                    },
+
+                    Message::Resume => {
+                        paused = false;
+                    },
+
                     Message::Step => {
-                        m.step();
+                        paused = true;
+                        computer.step();
                     },
 
                     Message::Inspect => {
-                        let message = format!("PC {}\nM {:?}", m.loc(), m.dump());
-                        tx_data.send(message).unwrap();
+                        let data = format!("PAUSED {}\nPC {}", paused, computer.loc());
+                        tx_data.send(data).unwrap();
                     }
                 }
             }
+
+            thread::yield_now();
+
+            if !paused {
+                computer.step();
+            }
+
         }
     });
 
