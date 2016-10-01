@@ -37,7 +37,12 @@ impl Machine {
                 if 0 == self.memory[b as usize] {
                   self.counter = self.memory[a as usize];
                 }
-            }
+            },
+
+            // M[A] <- PC
+            3 => {
+                self.memory[a as usize] = self.counter;
+            },
 
             // Unknown opcode
             _ => {
@@ -87,5 +92,16 @@ mod tests {
         m.load(vec![1, 2]);
         m.exec(2, 1, 0);
         assert_eq!(0, m.loc());
+    }
+
+    #[test]
+    fn it_runs_opcode_3() {
+        let mut m = Machine::new();
+
+        m.load(vec![1]);
+        assert_eq!(Some(&1), m.dump().first());
+
+        m.exec(3, 0, 0);
+        assert_eq!(Some(&0), m.dump().first());
     }
 }
