@@ -32,6 +32,15 @@ impl Machine {
         self.memory = data;
     }
 
+    pub fn step(&mut self) {
+        let counter = self.counter as usize;
+        let opcode = self.memory[counter];
+        let a = self.memory[counter + 1];
+        let b = self.memory[counter + 2];
+        let c = self.memory[counter + 3];
+        self.exec(opcode, a, b, c);
+    }
+
     pub fn exec(&mut self, opcode: u32, a: u32, b: u32, c: u32) {
         match opcode {
             // PC <- M[A]
@@ -146,10 +155,11 @@ mod tests {
 
     #[test]
     fn it_runs_opcode_1() {
-        let mut m = Machine::with_data(vec![0, 2]);
+        // PC <- M[A]
+        let mut m = Machine::with_data(vec![1, 3, 0, 2]);
 
         assert_eq!(0, m.loc());
-        m.exec(1, 1, 0, 0);
+        m.step();
         assert_eq!(2, m.loc());
     }
 
