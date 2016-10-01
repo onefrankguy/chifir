@@ -104,6 +104,14 @@ impl Machine {
                 self.counter += 4;
             },
 
+            // M[A] <- M[B] modulo M[C]
+            11 => {
+                let b = self.memory[b as usize];
+                let c = self.memory[c as usize];
+                self.memory[a as usize] = b % c;
+                self.counter += 4;
+            },
+
             // Unknown opcode
             _ => {
             },
@@ -236,6 +244,17 @@ mod tests {
         assert_eq!(0, m.loc());
         m.exec(10, 0, 1, 2);
         assert_eq!(Some(&3), m.dump().first());
+        assert_eq!(4, m.loc());
+    }
+
+    #[test]
+    fn it_runs_opcode_11() {
+        let mut m = Machine::with_data(vec![1, 11, 3]);
+
+        assert_eq!(Some(&1), m.dump().first());
+        assert_eq!(0, m.loc());
+        m.exec(11, 0, 1, 2);
+        assert_eq!(Some(&2), m.dump().first());
         assert_eq!(4, m.loc());
     }
 }
