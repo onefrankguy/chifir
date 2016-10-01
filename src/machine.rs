@@ -154,7 +154,7 @@ mod tests {
     }
 
     #[test]
-    fn it_runs_opcode_2_if() {
+    fn it_runs_opcode_2_then_branch() {
         let mut m = Machine::with_data(vec![0, 2]);
 
         assert_eq!(0, m.loc());
@@ -163,7 +163,7 @@ mod tests {
     }
 
     #[test]
-    fn it_runs_opcode_2_else() {
+    fn it_runs_opcode_2_else_branch() {
         let mut m = Machine::with_data(vec![1, 2]);
 
         assert_eq!(0, m.loc());
