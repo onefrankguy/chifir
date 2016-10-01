@@ -12,11 +12,17 @@ fn main() {
         io::stdout().flush().unwrap();
 
         let mut command = String::new();
+        let (tx, rx) = machine::spawn();
 
         io::stdin().read_line(&mut command).expect("Failed to read command");
 
         match command.trim() {
             "help" => println!("help, quit"),
+            "step" => {
+                tx.send(machine::Message::Step).unwrap();
+                tx.send(machine::Message::Inspect).unwrap();
+                println!("{}", rx.recv().unwrap());
+            },
             "quit" => break,
             _ => continue
         }

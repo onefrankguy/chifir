@@ -1,4 +1,38 @@
 use std::vec::Vec;
+use std::thread;
+use std::sync::mpsc;
+
+pub enum Message {
+    Step,
+    Inspect,
+}
+
+pub fn spawn() -> (mpsc::Sender<Message>, mpsc::Receiver<String>) {
+    let (tx_message, rx_message) = mpsc::channel();
+    let (tx_data, rx_data) = mpsc::channel();
+
+    thread::spawn(move || {
+        let mut m = Machine::new();
+
+        loop {
+            let message = rx_message.try_recv();
+            if message.is_ok() {
+                match message.unwrap() {
+                    Message::Step => {
+                        m.step();
+                    },
+
+                    Message::Inspect => {
+                        let message = format!("PC {}\nM {:?}", m.loc(), m.dump());
+                        tx_data.send(message).unwrap();
+                    }
+                }
+            }
+        }
+    });
+
+    return (tx_message, rx_data);
+}
 
 pub struct Machine {
     memory: Vec<u32>,
