@@ -11,5 +11,4 @@ pub fn end() -> String {
 }
 
 #[cfg(test)]
-mod tests {
-}
+mod tests {}

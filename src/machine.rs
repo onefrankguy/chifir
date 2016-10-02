@@ -25,20 +25,23 @@ pub fn spawn() -> (mpsc::Sender<Message>, mpsc::Receiver<String>) {
                 match message.unwrap() {
                     Message::Pause => {
                         paused = true;
-                    },
+                    }
 
                     Message::Resume => {
                         paused = false;
-                    },
+                    }
 
                     Message::Step => {
                         paused = true;
                         computer.step();
-                    },
+                    }
 
                     Message::Inspect => {
                         let state = if paused { "paused" } else { "running" };
-                        let data = format!("STATE {}\nPC {}\nM {:?}", state, computer.loc(), computer.dump());
+                        let data = format!("STATE {}\nPC {}\nM {:?}",
+                                           state,
+                                           computer.loc(),
+                                           computer.dump());
                         tx_data.send(data).unwrap();
                     }
                 }
@@ -124,28 +127,28 @@ impl<W: Write> Machine<W> {
             // PC <- M[A]
             1 => {
                 self.counter = self.read(a);
-            },
+            }
 
             // If M[B] = 0, then PC <- M[A]
             2 => {
                 if 0 == self.read(b) {
-                  self.counter = self.read(a);
+                    self.counter = self.read(a);
                 }
-            },
+            }
 
             // M[A] <- PC
             3 => {
                 let counter = self.counter;
                 self.write(a, counter);
                 self.counter += 4;
-            },
+            }
 
             // M[A] <- M[B]
             4 => {
                 let b = self.read(b);
                 self.write(a, b);
                 self.counter += 4;
-            },
+            }
 
             // M[A] <- M[M[B]]
             5 => {
@@ -153,7 +156,7 @@ impl<W: Write> Machine<W> {
                 let b = self.read(b);
                 self.write(a, b);
                 self.counter += 4;
-            },
+            }
 
             // M[M[B]] <- M[A]
             6 => {
@@ -161,7 +164,7 @@ impl<W: Write> Machine<W> {
                 let b = self.read(b);
                 self.write(b, a);
                 self.counter += 4;
-            },
+            }
 
             // M[A] <- M[B] + M[C]
             7 => {
@@ -169,7 +172,7 @@ impl<W: Write> Machine<W> {
                 let c = self.read(c);
                 self.write(a, b + c);
                 self.counter += 4;
-            },
+            }
 
             // M[A] <- M[B] - M[C]
             8 => {
@@ -177,7 +180,7 @@ impl<W: Write> Machine<W> {
                 let c = self.read(c);
                 self.write(a, b - c);
                 self.counter += 4;
-            },
+            }
 
             // M[A] <- M[B] * M[C]
             9 => {
@@ -185,7 +188,7 @@ impl<W: Write> Machine<W> {
                 let c = self.read(c);
                 self.write(a, b * c);
                 self.counter += 4;
-            },
+            }
 
             // M[A] <- M[B] / M[C]
             10 => {
@@ -193,7 +196,7 @@ impl<W: Write> Machine<W> {
                 let c = self.read(c);
                 self.write(a, b / c);
                 self.counter += 4;
-            },
+            }
 
             // M[A] <- M[B] % M[C]
             11 => {
@@ -201,41 +204,40 @@ impl<W: Write> Machine<W> {
                 let c = self.read(c);
                 self.write(a, b % c);
                 self.counter += 4;
-            },
+            }
 
             // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
             12 => {
                 let b = self.read(b);
                 let c = self.read(c);
                 if b < c {
-                  self.write(a, 1);
+                    self.write(a, 1);
                 } else {
-                  self.write(a, 0);
+                    self.write(a, 0);
                 }
                 self.counter += 4;
-            },
+            }
 
             // MA[A] <- NOT(M[B] AND M[C])
             13 => {
                 let b = self.read(b);
                 let c = self.read(c);
                 if b > 0 && c > 0 {
-                  self.write(a, 0);
+                    self.write(a, 0);
                 } else {
-                  self.write(a, 1);
+                    self.write(a, 1);
                 }
                 self.counter += 4;
-            },
+            }
 
             // Refresh the screen
             14 => {
                 self.render();
                 self.counter += 4;
-            },
+            }
 
             // Unknown opcode
-            _ => {
-            },
+            _ => {}
         }
     }
 }
@@ -264,7 +266,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_1() {
         // PC <- M[A]
-        let mut m = Machine { memory: vec![1, 4, 0, 0, 2], .. Machine::new() };
+        let mut m = Machine { memory: vec![1, 4, 0, 0, 2], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -274,7 +276,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_2_then_branch() {
         // If M[B] = 0, then PC <- M[A]
-        let mut m = Machine { memory: vec![2, 4, 5, 0, 2, 0], .. Machine::new() };
+        let mut m = Machine { memory: vec![2, 4, 5, 0, 2, 0], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -284,7 +286,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_2_else_branch() {
         // If M[B] = 0, then PC <- M[A]
-        let mut m = Machine { memory: vec![2, 4, 5, 0, 2, 1], .. Machine::new() };
+        let mut m = Machine { memory: vec![2, 4, 5, 0, 2, 1], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -294,7 +296,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_3() {
         // M[A] <- PC
-        let mut m = Machine { memory: vec![3, 4, 0, 0, 1], .. Machine::new() };
+        let mut m = Machine { memory: vec![3, 4, 0, 0, 1], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -305,7 +307,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_4() {
         // M[A] <- M[B]
-        let mut m = Machine { memory: vec![4, 4, 5, 0, 6, 7], .. Machine::new() };
+        let mut m = Machine { memory: vec![4, 4, 5, 0, 6, 7], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -316,7 +318,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_5() {
         // M[A] <- M[M[B]]
-        let mut m = Machine { memory: vec![5, 4, 5, 0, 6, 7, 0, 8], .. Machine::new() };
+        let mut m = Machine { memory: vec![5, 4, 5, 0, 6, 7, 0, 8], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -327,7 +329,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_6() {
         // M[M[B]] <- M[A]
-        let mut m = Machine { memory: vec![6, 4, 5, 0, 8, 6, 7], .. Machine::new() };
+        let mut m = Machine { memory: vec![6, 4, 5, 0, 8, 6, 7], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -338,7 +340,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_7() {
         // M[A] <- M[B] + M[C]
-        let mut m = Machine { memory: vec![7, 4, 5, 6, 0, 11, 2], .. Machine::new() };
+        let mut m = Machine { memory: vec![7, 4, 5, 6, 0, 11, 2], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -349,7 +351,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_8() {
         // M[A] <- M[B] - M[C]
-        let mut m = Machine { memory: vec![8, 4, 5, 6, 0, 11, 2], .. Machine::new() };
+        let mut m = Machine { memory: vec![8, 4, 5, 6, 0, 11, 2], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -360,7 +362,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_9() {
         // M[A] <- M[B] * M[C]
-        let mut m = Machine { memory: vec![9, 4, 5, 6, 0, 11, 2], .. Machine::new() };
+        let mut m = Machine { memory: vec![9, 4, 5, 6, 0, 11, 2], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -371,7 +373,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_10() {
         // M[A] <- M[B] / M[C]
-        let mut m = Machine { memory: vec![10, 4, 5, 6, 0, 11, 2], .. Machine::new() };
+        let mut m = Machine { memory: vec![10, 4, 5, 6, 0, 11, 2], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -382,7 +384,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_11() {
         // M[A] <- M[B] % M[C]
-        let mut m = Machine { memory: vec![11, 4, 5, 6, 0, 11, 2], .. Machine::new() };
+        let mut m = Machine { memory: vec![11, 4, 5, 6, 0, 11, 2], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -393,7 +395,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_12_then_branch() {
         // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
-        let mut m = Machine { memory: vec![12, 4, 5, 6, 2, 8, 9], .. Machine::new() };
+        let mut m = Machine { memory: vec![12, 4, 5, 6, 2, 8, 9], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -404,7 +406,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_12_else_branch() {
         // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
-        let mut m = Machine { memory: vec![12, 4, 5, 6, 2, 9, 8], .. Machine::new() };
+        let mut m = Machine { memory: vec![12, 4, 5, 6, 2, 9, 8], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -415,7 +417,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_13_false_false_branch() {
         // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 0, 0], .. Machine::new() };
+        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 0, 0], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -426,7 +428,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_13_false_true_branch() {
         // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 0, 1], .. Machine::new() };
+        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 0, 1], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -437,7 +439,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_13_true_false_branch() {
         // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 1, 0], .. Machine::new() };
+        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 1, 0], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -448,7 +450,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_13_true_true_branch() {
         // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 1, 1], .. Machine::new() };
+        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 1, 1], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -462,17 +464,26 @@ mod tests {
         use std::io::Cursor;
 
         let buffer = Cursor::new(Vec::new());
-        let mut m = Machine { memory: vec![14, 0, 0, 0], counter: 0, output: buffer };
+        let mut m = Machine {
+            memory: vec![14, 0, 0, 0],
+            counter: 0,
+            output: buffer,
+        };
 
         assert_eq!(0, m.loc());
         m.step();
-        assert_eq!(&m.output.get_ref()[0..9], &[27, 91, 50, 74, 27, 80, 113, 27, 92]);
+        assert_eq!(&m.output.get_ref()[0..9],
+                   &[27, 91, 50, 74, 27, 80, 113, 27, 92]);
         assert_eq!(4, m.loc());
     }
 
     #[test]
     fn it_provides_safe_memory_access_when_stepping() {
-        let mut m = Machine { memory: vec![0], counter: 3, .. Machine::new() };
+        let mut m = Machine {
+            memory: vec![0],
+            counter: 3,
+            ..Machine::new()
+        };
 
         m.step();
         assert_eq!(&vec![0, 0, 0, 0, 0, 0, 0], m.dump());

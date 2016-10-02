@@ -20,30 +20,30 @@ fn main() {
         match command.trim() {
             "help" => {
                 println!("help, pause, resume, step, inspect, quit");
-            },
+            }
 
             "pause" => {
                 tx.send(chifir::machine::Message::Pause).unwrap();
-            },
+            }
 
             "resume" => {
                 tx.send(chifir::machine::Message::Resume).unwrap();
-            },
+            }
 
             "step" => {
                 tx.send(chifir::machine::Message::Step).unwrap();
                 tx.send(chifir::machine::Message::Inspect).unwrap();
                 println!("{}", rx.recv().unwrap());
-            },
+            }
 
             "inspect" => {
                 tx.send(chifir::machine::Message::Inspect).unwrap();
                 println!("{}", rx.recv().unwrap());
-            },
+            }
 
             "quit" => {
                 break;
-            },
+            }
 
             _ => {
                 continue;
