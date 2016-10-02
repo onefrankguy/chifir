@@ -28,6 +28,9 @@ pub fn from(memory: &[u32], width: usize, height: usize) -> String {
             pixels.push(byte + 63);
         }
 
+        // Push "$-" to move to the next row.
+        pixels.push(36);
+        pixels.push(45);
         row += 6;
     }
 
@@ -38,22 +41,22 @@ pub fn from(memory: &[u32], width: usize, height: usize) -> String {
 mod tests {
     #[test]
     fn it_converts_000000_to_question_mark() {
-        assert_eq!(super::from(&[0, 0, 0, 0, 0, 0], 1, 6), "?");
+        assert_eq!(super::from(&[0, 0, 0, 0, 0, 0], 1, 6), "?$-");
     }
 
     #[test]
     fn it_converts_000111_to_w() {
-        assert_eq!(super::from(&[0, 0, 0, 1, 1, 1], 1, 6), "w");
+        assert_eq!(super::from(&[0, 0, 0, 1, 1, 1], 1, 6), "w$-");
     }
 
     #[test]
     fn it_converts_111000_to_capital_f() {
-        assert_eq!(super::from(&[1, 1, 1, 0, 0, 0], 1, 6), "F");
+        assert_eq!(super::from(&[1, 1, 1, 0, 0, 0], 1, 6), "F$-");
     }
 
     #[test]
     fn it_converts_111111_to_tilde() {
-        assert_eq!(super::from(&[1, 1, 1, 1, 1, 1], 1, 6), "~");
+        assert_eq!(super::from(&[1, 1, 1, 1, 1, 1], 1, 6), "~$-");
     }
 
     #[test]
@@ -62,6 +65,6 @@ mod tests {
                                  0, 0, 0],
                                4,
                                6),
-                   "]DD]");
+                   "]DD]$-");
     }
 }
