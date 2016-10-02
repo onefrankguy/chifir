@@ -95,6 +95,16 @@ impl Machine {
         return self.memory[index];
     }
 
+    fn write(&mut self, index: u32, value: u32) {
+        let index = index as usize;
+
+        if index >= self.memory.len() {
+            self.memory.resize(index + 1, 0);
+        }
+
+        self.memory[index] = value;
+    }
+
     fn exec(&mut self, opcode: u32, a: u32, b: u32, c: u32) {
         match opcode {
             // PC <- M[A]
@@ -111,27 +121,31 @@ impl Machine {
 
             // M[A] <- PC
             3 => {
-                self.memory[a as usize] = self.counter;
+                let counter = self.counter;
+                self.write(a, counter);
                 self.counter += 4;
             },
 
             // M[A] <- M[B]
             4 => {
-                self.memory[a as usize] = self.read(b);
+                let b = self.read(b);
+                self.write(a, b);
                 self.counter += 4;
             },
 
             // M[A] <- M[M[B]]
             5 => {
                 let b = self.read(b);
-                self.memory[a as usize] = self.read(b);
+                let b = self.read(b);
+                self.write(a, b);
                 self.counter += 4;
             },
 
             // M[M[B]] <- M[A]
             6 => {
+                let a = self.read(a);
                 let b = self.read(b);
-                self.memory[b as usize] = self.read(a);
+                self.write(b, a);
                 self.counter += 4;
             },
 
@@ -139,7 +153,7 @@ impl Machine {
             7 => {
                 let b = self.read(b);
                 let c = self.read(c);
-                self.memory[a as usize] = b + c;
+                self.write(a, b + c);
                 self.counter += 4;
             },
 
@@ -147,7 +161,7 @@ impl Machine {
             8 => {
                 let b = self.read(b);
                 let c = self.read(c);
-                self.memory[a as usize] = b - c;
+                self.write(a, b - c);
                 self.counter += 4;
             },
 
@@ -155,7 +169,7 @@ impl Machine {
             9 => {
                 let b = self.read(b);
                 let c = self.read(c);
-                self.memory[a as usize] = b * c;
+                self.write(a, b * c);
                 self.counter += 4;
             },
 
@@ -163,7 +177,7 @@ impl Machine {
             10 => {
                 let b = self.read(b);
                 let c = self.read(c);
-                self.memory[a as usize] = b / c;
+                self.write(a, b / c);
                 self.counter += 4;
             },
 
@@ -171,7 +185,7 @@ impl Machine {
             11 => {
                 let b = self.read(b);
                 let c = self.read(c);
-                self.memory[a as usize] = b % c;
+                self.write(a, b % c);
                 self.counter += 4;
             },
 
@@ -180,9 +194,9 @@ impl Machine {
                 let b = self.read(b);
                 let c = self.read(c);
                 if b < c {
-                  self.memory[a as usize] = 1;
+                  self.write(a, 1);
                 } else {
-                  self.memory[a as usize] = 0;
+                  self.write(a, 0);
                 }
                 self.counter += 4;
             },
@@ -192,9 +206,9 @@ impl Machine {
                 let b = self.read(b);
                 let c = self.read(c);
                 if b > 0 && c > 0 {
-                  self.memory[a as usize] = 0;
+                  self.write(a, 0);
                 } else {
-                  self.memory[a as usize] = 1;
+                  self.write(a, 1);
                 }
                 self.counter += 4;
             },
