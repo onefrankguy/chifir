@@ -1,4 +1,4 @@
-mod machine;
+extern crate chifir;
 
 use std::io::{self, Write};
 
@@ -7,7 +7,7 @@ fn main() {
     println!("");
     println!("Type 'help' to get started.");
 
-    let (tx, rx) = machine::spawn();
+    let (tx, rx) = chifir::machine::spawn();
 
     loop {
         print!("> ");
@@ -23,21 +23,21 @@ fn main() {
             },
 
             "pause" => {
-                tx.send(machine::Message::Pause).unwrap();
+                tx.send(chifir::machine::Message::Pause).unwrap();
             },
 
             "resume" => {
-                tx.send(machine::Message::Resume).unwrap();
+                tx.send(chifir::machine::Message::Resume).unwrap();
             },
 
             "step" => {
-                tx.send(machine::Message::Step).unwrap();
-                tx.send(machine::Message::Inspect).unwrap();
+                tx.send(chifir::machine::Message::Step).unwrap();
+                tx.send(chifir::machine::Message::Inspect).unwrap();
                 println!("{}", rx.recv().unwrap());
             },
 
             "inspect" => {
-                tx.send(machine::Message::Inspect).unwrap();
+                tx.send(chifir::machine::Message::Inspect).unwrap();
                 println!("{}", rx.recv().unwrap());
             },
 
