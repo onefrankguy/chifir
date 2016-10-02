@@ -2,5 +2,10 @@
 name = "chifir"
 version = "0.1.0"
 authors = ["Frank Mitchell <me@frankmitchell.org>"]
+description = "Chifir is a fun afternoon hack, an implementation of a virtual computer in Rust."
+
+repository = "https://github.com/onefrankguy/chifir"
+readme = "README.md"
+license = "MIT"
 
 [dependencies]
