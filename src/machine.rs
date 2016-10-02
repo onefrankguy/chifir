@@ -66,13 +66,6 @@ impl Machine {
         }
     }
 
-    pub fn with_data(data: Vec<u32>) -> Machine {
-        Machine {
-            memory: data,
-            counter: 0,
-        }
-    }
-
     pub fn loc(&self) -> u32 {
         self.counter
     }
@@ -221,7 +214,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_1() {
         // PC <- M[A]
-        let mut m = Machine::with_data(vec![1, 4, 0, 0, 2]);
+        let mut m = Machine { memory: vec![1, 4, 0, 0, 2], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -231,7 +224,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_2_then_branch() {
         // If M[B] = 0, then PC <- M[A]
-        let mut m = Machine::with_data(vec![2, 4, 5, 0, 2, 0]);
+        let mut m = Machine { memory: vec![2, 4, 5, 0, 2, 0], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -241,7 +234,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_2_else_branch() {
         // If M[B] = 0, then PC <- M[A]
-        let mut m = Machine::with_data(vec![2, 4, 5, 0, 2, 1]);
+        let mut m = Machine { memory: vec![2, 4, 5, 0, 2, 1], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -251,7 +244,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_3() {
         // M[A] <- PC
-        let mut m = Machine::with_data(vec![3, 4, 0, 0, 1]);
+        let mut m = Machine { memory: vec![3, 4, 0, 0, 1], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -262,7 +255,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_4() {
         // M[A] <- M[B]
-        let mut m = Machine::with_data(vec![4, 4, 5, 0, 6, 7]);
+        let mut m = Machine { memory: vec![4, 4, 5, 0, 6, 7], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -273,7 +266,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_5() {
         // M[A] <- M[M[B]]
-        let mut m = Machine::with_data(vec![5, 4, 5, 0, 6, 7, 0, 8]);
+        let mut m = Machine { memory: vec![5, 4, 5, 0, 6, 7, 0, 8], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -284,7 +277,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_6() {
         // M[M[B]] <- M[A]
-        let mut m = Machine::with_data(vec![6, 4, 5, 0, 8, 6, 7]);
+        let mut m = Machine { memory: vec![6, 4, 5, 0, 8, 6, 7], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -295,7 +288,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_7() {
         // M[A] <- M[B] + M[C]
-        let mut m = Machine::with_data(vec![7, 4, 5, 6, 0, 11, 2]);
+        let mut m = Machine { memory: vec![7, 4, 5, 6, 0, 11, 2], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -306,7 +299,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_8() {
         // M[A] <- M[B] - M[C]
-        let mut m = Machine::with_data(vec![8, 4, 5, 6, 0, 11, 2]);
+        let mut m = Machine { memory: vec![8, 4, 5, 6, 0, 11, 2], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -317,7 +310,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_9() {
         // M[A] <- M[B] * M[C]
-        let mut m = Machine::with_data(vec![9, 4, 5, 6, 0, 11, 2]);
+        let mut m = Machine { memory: vec![9, 4, 5, 6, 0, 11, 2], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -328,7 +321,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_10() {
         // M[A] <- M[B] / M[C]
-        let mut m = Machine::with_data(vec![10, 4, 5, 6, 0, 11, 2]);
+        let mut m = Machine { memory: vec![10, 4, 5, 6, 0, 11, 2], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -339,7 +332,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_11() {
         // M[A] <- M[B] % M[C]
-        let mut m = Machine::with_data(vec![11, 4, 5, 6, 0, 11, 2]);
+        let mut m = Machine { memory: vec![11, 4, 5, 6, 0, 11, 2], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -350,7 +343,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_12_then_branch() {
         // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
-        let mut m = Machine::with_data(vec![12, 4, 5, 6, 2, 8, 9]);
+        let mut m = Machine { memory: vec![12, 4, 5, 6, 2, 8, 9], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -361,7 +354,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_12_else_branch() {
         // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
-        let mut m = Machine::with_data(vec![12, 4, 5, 6, 2, 9, 8]);
+        let mut m = Machine { memory: vec![12, 4, 5, 6, 2, 9, 8], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -372,7 +365,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_13_false_false_branch() {
         // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine::with_data(vec![13, 4, 5, 6, 2, 0, 0]);
+        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 0, 0], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -383,7 +376,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_13_false_true_branch() {
         // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine::with_data(vec![13, 4, 5, 6, 2, 0, 1]);
+        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 0, 1], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -394,7 +387,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_13_true_false_branch() {
         // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine::with_data(vec![13, 4, 5, 6, 2, 1, 0]);
+        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 1, 0], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -405,7 +398,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_13_true_true_branch() {
         // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine::with_data(vec![13, 4, 5, 6, 2, 1, 1]);
+        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 1, 1], .. Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
