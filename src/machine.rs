@@ -1,3 +1,5 @@
+use super::sixel;
+use std::io::{self, Write};
 use std::vec::Vec;
 use std::thread;
 use std::sync::mpsc;
@@ -54,21 +56,25 @@ pub fn spawn() -> (mpsc::Sender<Message>, mpsc::Receiver<String>) {
     return (tx_message, rx_data);
 }
 
-pub struct Machine {
+pub struct Machine<W: Write> {
     memory: Vec<u32>,
     counter: u32,
+    pub output: W,
 }
 
-impl Machine {
-    pub fn new() -> Machine {
+impl Machine<io::Stdout> {
+    pub fn new() -> Self {
         Machine {
             // Default to a valid program in memory.
             // This one is an infinite loop.
             memory: vec![1, 2, 0, 0],
             counter: 0,
+            output: io::stdout(),
         }
     }
+}
 
+impl<W: Write> Machine<W> {
     pub fn loc(&self) -> u32 {
         self.counter
     }
@@ -104,6 +110,13 @@ impl Machine {
         }
 
         self.memory[index] = value;
+    }
+
+    fn render(&mut self) {
+        self.output.write(sixel::clear().as_bytes()).unwrap();
+        self.output.write(sixel::begin().as_bytes()).unwrap();
+        self.output.write(sixel::end().as_bytes()).unwrap();
+        self.output.flush().unwrap();
     }
 
     fn exec(&mut self, opcode: u32, a: u32, b: u32, c: u32) {
@@ -211,6 +224,12 @@ impl Machine {
                 } else {
                   self.write(a, 1);
                 }
+                self.counter += 4;
+            },
+
+            // Refresh the screen
+            14 => {
+                self.render();
                 self.counter += 4;
             },
 
@@ -438,8 +457,22 @@ mod tests {
     }
 
     #[test]
+    fn it_runs_opcode_14() {
+        // Refresh the screen
+        use std::io::Cursor;
+
+        let buffer = Cursor::new(Vec::new());
+        let mut m = Machine { memory: vec![14, 0, 0, 0], counter: 0, output: buffer };
+
+        assert_eq!(0, m.loc());
+        m.step();
+        assert_eq!(&m.output.get_ref()[0..9], &[27, 91, 50, 74, 27, 80, 113, 27, 92]);
+        assert_eq!(4, m.loc());
+    }
+
+    #[test]
     fn it_provides_safe_memory_access_when_stepping() {
-        let mut m = Machine { memory: vec![0], counter: 3 };
+        let mut m = Machine { memory: vec![0], counter: 3, .. Machine::new() };
 
         m.step();
         assert_eq!(&vec![0, 0, 0, 0, 0, 0, 0], m.dump());
