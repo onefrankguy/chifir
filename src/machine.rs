@@ -35,7 +35,8 @@ pub fn spawn() -> (mpsc::Sender<Message>, mpsc::Receiver<String>) {
                     },
 
                     Message::Inspect => {
-                        let data = format!("PAUSED {}\nPC {}", paused, computer.loc());
+                        let state = if paused { "paused" } else { "running" };
+                        let data = format!("STATE {}\nPC {}\nM {:?}", state, computer.loc(), computer.dump());
                         tx_data.send(data).unwrap();
                     }
                 }
