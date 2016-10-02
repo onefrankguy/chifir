@@ -78,14 +78,14 @@ impl Machine {
 
     pub fn step(&mut self) {
         let counter = self.counter;
-        let opcode = self.memory_at(counter);
-        let a = self.memory_at(counter + 1);
-        let b = self.memory_at(counter + 2);
-        let c = self.memory_at(counter + 3);
+        let opcode = self.read(counter);
+        let a = self.read(counter + 1);
+        let b = self.read(counter + 2);
+        let c = self.read(counter + 3);
         self.exec(opcode, a, b, c);
     }
 
-    fn memory_at(&mut self, index: u32) -> u32 {
+    fn read(&mut self, index: u32) -> u32 {
         let index = index as usize;
 
         if index >= self.memory.len() {
