@@ -21,7 +21,7 @@ pub fn from(memory: &[u32], width: usize, height: usize) -> String {
             for y in 0..6 {
                 let offset = x + (y * width);
                 if memory[offset] > 0 {
-                    byte = byte | (1 << offset);
+                    byte = byte | (1 << y);
                 }
             }
 
@@ -54,5 +54,14 @@ mod tests {
     #[test]
     fn it_converts_111111_to_tilde() {
         assert_eq!(super::from(&[1, 1, 1, 1, 1, 1], 1, 6), "~");
+    }
+
+    #[test]
+    fn it_displays_capital_a() {
+        assert_eq!(super::from(&[0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0,
+                                 0, 0, 0],
+                               4,
+                               6),
+                   "]DD]");
     }
 }
