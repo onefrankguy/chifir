@@ -99,13 +99,13 @@ impl Machine {
         match opcode {
             // PC <- M[A]
             1 => {
-                self.counter = self.memory[a as usize];
+                self.counter = self.read(a);
             },
 
             // If M[B] = 0, then PC <- M[A]
             2 => {
-                if 0 == self.memory[b as usize] {
-                  self.counter = self.memory[a as usize];
+                if 0 == self.read(b) {
+                  self.counter = self.read(a);
                 }
             },
 
@@ -117,68 +117,68 @@ impl Machine {
 
             // M[A] <- M[B]
             4 => {
-                self.memory[a as usize] = self.memory[b as usize];
+                self.memory[a as usize] = self.read(b);
                 self.counter += 4;
             },
 
             // M[A] <- M[M[B]]
             5 => {
-                let b = self.memory[b as usize];
-                self.memory[a as usize] = self.memory[b as usize];
+                let b = self.read(b);
+                self.memory[a as usize] = self.read(b);
                 self.counter += 4;
             },
 
             // M[M[B]] <- M[A]
             6 => {
-                let b = self.memory[b as usize];
-                self.memory[b as usize] = self.memory[a as usize];
+                let b = self.read(b);
+                self.memory[b as usize] = self.read(a);
                 self.counter += 4;
             },
 
             // M[A] <- M[B] + M[C]
             7 => {
-                let b = self.memory[b as usize];
-                let c = self.memory[c as usize];
+                let b = self.read(b);
+                let c = self.read(c);
                 self.memory[a as usize] = b + c;
                 self.counter += 4;
             },
 
             // M[A] <- M[B] - M[C]
             8 => {
-                let b = self.memory[b as usize];
-                let c = self.memory[c as usize];
+                let b = self.read(b);
+                let c = self.read(c);
                 self.memory[a as usize] = b - c;
                 self.counter += 4;
             },
 
             // M[A] <- M[B] * M[C]
             9 => {
-                let b = self.memory[b as usize];
-                let c = self.memory[c as usize];
+                let b = self.read(b);
+                let c = self.read(c);
                 self.memory[a as usize] = b * c;
                 self.counter += 4;
             },
 
             // M[A] <- M[B] / M[C]
             10 => {
-                let b = self.memory[b as usize];
-                let c = self.memory[c as usize];
+                let b = self.read(b);
+                let c = self.read(c);
                 self.memory[a as usize] = b / c;
                 self.counter += 4;
             },
 
             // M[A] <- M[B] % M[C]
             11 => {
-                let b = self.memory[b as usize];
-                let c = self.memory[c as usize];
+                let b = self.read(b);
+                let c = self.read(c);
                 self.memory[a as usize] = b % c;
                 self.counter += 4;
             },
 
             // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
             12 => {
-                let b = self.memory[b as usize];
-                let c = self.memory[c as usize];
+                let b = self.read(b);
+                let c = self.read(c);
                 if b < c {
                   self.memory[a as usize] = 1;
                 } else {
@@ -189,8 +189,8 @@ impl Machine {
 
             // MA[A] <- NOT(M[B] AND M[C])
             13 => {
-                let b = self.memory[b as usize];
-                let c = self.memory[c as usize];
+                let b = self.read(b);
+                let c = self.read(c);
                 if b > 0 && c > 0 {
                   self.memory[a as usize] = 0;
                 } else {
