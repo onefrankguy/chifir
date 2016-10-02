@@ -77,12 +77,22 @@ impl Machine {
     }
 
     pub fn step(&mut self) {
-        let counter = self.counter as usize;
-        let opcode = self.memory[counter];
-        let a = self.memory[counter + 1];
-        let b = self.memory[counter + 2];
-        let c = self.memory[counter + 3];
+        let counter = self.counter;
+        let opcode = self.memory_at(counter);
+        let a = self.memory_at(counter + 1);
+        let b = self.memory_at(counter + 2);
+        let c = self.memory_at(counter + 3);
         self.exec(opcode, a, b, c);
+    }
+
+    fn memory_at(&mut self, index: u32) -> u32 {
+        let index = index as usize;
+
+        if index >= self.memory.len() {
+            self.memory.resize(index + 1, 0);
+        }
+
+        return self.memory[index];
     }
 
     fn exec(&mut self, opcode: u32, a: u32, b: u32, c: u32) {
@@ -410,5 +420,13 @@ mod tests {
         m.step();
         assert_eq!(&vec![13, 4, 5, 6, 0, 1, 1], m.dump());
         assert_eq!(4, m.loc());
+    }
+
+    #[test]
+    fn it_provides_safe_memory_access_when_stepping() {
+        let mut m = Machine { memory: vec![0], counter: 3 };
+
+        m.step();
+        assert_eq!(&vec![0, 0, 0, 0, 0, 0, 0], m.dump());
     }
 }
