@@ -61,7 +61,9 @@ pub struct Machine {
 impl Machine {
     pub fn new() -> Machine {
         Machine {
-            memory: vec![0; 2097152],
+            // Default to a valid program in memory.
+            // This one is an infinite loop.
+            memory: vec![1, 2, 0, 0],
             counter: 0,
         }
     }
@@ -203,12 +205,20 @@ mod tests {
     use super::Machine;
 
     #[test]
-    fn it_loads_data() {
+    fn it_defaults_to_an_infinite_loop() {
         let mut m = Machine::new();
-        assert_eq!(Some(&0), m.dump().first());
 
-        m.load(vec![1]);
-        assert_eq!(Some(&1), m.dump().first());
+        // Read initial memory and program counter.
+        let memory = m.dump().to_vec();
+        let counter = m.loc();
+
+        // Step the program twice. If nothing changes, we're in a loop.
+        m.step();
+        assert_eq!(counter, m.loc());
+        assert_eq!(&memory, m.dump());
+        m.step();
+        assert_eq!(counter, m.loc());
+        assert_eq!(&memory, m.dump());
     }
 
     #[test]
