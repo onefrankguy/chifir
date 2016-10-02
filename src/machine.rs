@@ -116,8 +116,22 @@ impl<W: Write> Machine<W> {
     }
 
     fn render(&mut self) {
+        let width = 512;
+        let height = 684;
+        let start = 1_048_576;
+        let end = start + (width * height);
+        self.read(start);
+        self.read(end);
+
+        let width = width as usize;
+        let height = height as usize;
+        let start = start as usize;
+        let end = end as usize;
+        let memory = &self.memory[start..end];
+
         self.output.write(sixel::clear().as_bytes()).unwrap();
         self.output.write(sixel::begin().as_bytes()).unwrap();
+        self.output.write(sixel::from(memory, width, height).as_bytes()).unwrap();
         self.output.write(sixel::end().as_bytes()).unwrap();
         self.output.flush().unwrap();
     }
@@ -470,11 +484,21 @@ mod tests {
             output: buffer,
         };
 
+        // Move the program counter after rendering.
         assert_eq!(0, m.loc());
         m.step();
-        assert_eq!(&m.output.get_ref()[0..9],
-                   &[27, 91, 50, 74, 27, 80, 113, 27, 92]);
         assert_eq!(4, m.loc());
+
+        let buffer = m.output.get_ref();
+
+        // Clear the terminal.
+        assert_eq!(&buffer[0..4], &[27, 91, 50, 74]);
+
+        // Put the terminal in Sixel graphics mode.
+        assert_eq!(&buffer[4..7], &[27, 80, 113]);
+
+        // Return the terminal to normal mode.
+        assert_eq!(&buffer[buffer.len() - 2..buffer.len()], &[27, 92]);
     }
 
     #[test]
