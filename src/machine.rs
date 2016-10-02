@@ -76,10 +76,6 @@ impl Machine {
         &self.memory
     }
 
-    pub fn load(&mut self, data: Vec<u32>) {
-        self.memory = data;
-    }
-
     pub fn step(&mut self) {
         let counter = self.counter as usize;
         let opcode = self.memory[counter];
