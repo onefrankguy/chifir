@@ -16,7 +16,7 @@ pub fn spawn() -> (mpsc::Sender<Message>, mpsc::Receiver<String>) {
     let (tx_data, rx_data) = mpsc::channel();
 
     thread::spawn(move || {
-        let mut computer = Machine::new();
+        let mut computer = Machine { memory: vec![14, 0, 0, 0, 1, 4, 0, 0], ..Machine::new() };
         let mut paused = false;
 
         loop {
@@ -131,7 +131,7 @@ impl<W: Write> Machine<W> {
 
         self.output.write(sixel::clear().as_bytes()).unwrap();
         self.output.write(sixel::begin().as_bytes()).unwrap();
-        self.output.write(sixel::from(memory, width, height).as_bytes()).unwrap();
+        self.output.write(sixel::from(memory, width, height, true).as_bytes()).unwrap();
         self.output.write(sixel::end().as_bytes()).unwrap();
         self.output.flush().unwrap();
     }
