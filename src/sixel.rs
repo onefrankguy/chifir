@@ -1,5 +1,5 @@
 pub fn clear() -> String {
-    "\x1b[0;0H".to_string()
+    "\x1b[1;1H".to_string()
 }
 
 pub fn begin() -> String {
