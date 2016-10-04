@@ -1,5 +1,7 @@
+use termion;
+
 use super::sixel;
-use std::io::{self, Write};
+use std::io::{self, Write, Read};
 use std::vec::Vec;
 use std::thread;
 use std::sync::mpsc;
@@ -59,13 +61,14 @@ pub fn spawn() -> (mpsc::Sender<Message>, mpsc::Receiver<String>) {
     return (tx_message, rx_data);
 }
 
-pub struct Machine<W: Write> {
+pub struct Machine<W: Write, R: Read> {
     memory: Vec<u32>,
     counter: u32,
     pub output: W,
+    pub input: R,
 }
 
-impl Machine<io::Stdout> {
+impl Machine<io::Stdout, termion::AsyncReader> {
     pub fn new() -> Self {
         Machine {
             // Default to a valid program in memory.
@@ -73,11 +76,12 @@ impl Machine<io::Stdout> {
             memory: vec![1, 2, 0, 0],
             counter: 0,
             output: io::stdout(),
+            input: termion::async_stdin(),
         }
     }
 }
 
-impl<W: Write> Machine<W> {
+impl<W: Write, R: Read> Machine<W, R> {
     pub fn loc(&self) -> u32 {
         self.counter
     }
@@ -248,6 +252,18 @@ impl<W: Write> Machine<W> {
             14 => {
                 self.render();
                 self.counter += 4;
+            }
+
+            // Get one character from the keyboard and store it into M[A]
+            15 => {
+                let mut bytes = Vec::new();
+                match self.input.read_to_end(&mut bytes) {
+                    Ok(size) => if size > 0 {
+                        self.write(a, bytes[size - 1] as u32);
+                        self.counter += 4;
+                    },
+                    _ => {}
+                }
             }
 
             // Unknown opcode
@@ -478,11 +494,13 @@ mod tests {
         use std::io::Cursor;
 
         let output = Cursor::new(Vec::new());
+        let input = Cursor::new(Vec::new());
 
         let mut m = Machine {
             memory: vec![14, 0, 0, 0],
             counter: 0,
             output: output,
+            input: input,
         };
 
         // Move the program counter after rendering.
@@ -500,6 +518,51 @@ mod tests {
 
         // Return the terminal to normal mode.
         assert_eq!(&buffer[buffer.len() - 2..buffer.len()], &[27, 92]);
+    }
+
+    #[test]
+    fn it_runs_opcode_15_blocking() {
+        // Get one character from the keyboard and store it into M[A]
+        use std::io::Cursor;
+
+        let output = Cursor::new(Vec::new());
+        let input = Cursor::new(Vec::new());
+
+        let mut m = Machine {
+            memory: vec![15, 1, 0, 0],
+            counter: 0,
+            output: output,
+            input: input
+        };
+
+        // Don't the program counter if reading failed.
+        assert_eq!(0, m.loc());
+        m.step();
+        assert_eq!(0, m.loc());
+    }
+
+    #[test]
+    fn it_runs_opcode_15_non_blocking() {
+        // Get one character from the keyboard and store it into M[A]
+        use std::io::Cursor;
+
+        let output = Cursor::new(Vec::new());
+        let input = Cursor::new(vec![8, 10, 13, 32]);
+
+        let mut m = Machine {
+            memory: vec![15, 1, 0, 0],
+            counter: 0,
+            output: output,
+            input: input
+        };
+
+        // Move the program counter after reading.
+        assert_eq!(0, m.loc());
+        m.step();
+        assert_eq!(4, m.loc());
+
+        // Only save the last key pressed.
+        assert_eq!(&vec![15, 32, 0, 0], m.dump());
     }
 
     #[test]

@@ -9,3 +9,4 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
+termion = "1.0"
