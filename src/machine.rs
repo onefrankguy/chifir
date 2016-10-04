@@ -477,11 +477,12 @@ mod tests {
         // Refresh the screen
         use std::io::Cursor;
 
-        let buffer = Cursor::new(Vec::new());
+        let output = Cursor::new(Vec::new());
+
         let mut m = Machine {
             memory: vec![14, 0, 0, 0],
             counter: 0,
-            output: buffer,
+            output: output,
         };
 
         // Move the program counter after rendering.
@@ -491,11 +492,11 @@ mod tests {
 
         let buffer = m.output.get_ref();
 
-        // Clear the terminal.
-        assert_eq!(&buffer[0..4], &[27, 91, 50, 74]);
+        // Move the cursor to (1,1).
+        assert_eq!(&buffer[0..6], &[27, 91, 49, 59, 49, 72]);
 
         // Put the terminal in Sixel graphics mode.
-        assert_eq!(&buffer[4..7], &[27, 80, 113]);
+        assert_eq!(&buffer[6..9], &[27, 80, 113]);
 
         // Return the terminal to normal mode.
         assert_eq!(&buffer[buffer.len() - 2..buffer.len()], &[27, 92]);
