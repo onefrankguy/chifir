@@ -1,7 +1,7 @@
 use termion;
 
 use super::sixel;
-use std::io::{self, Write, Read};
+use std::io::{self, Write, Read, Cursor};
 use std::vec::Vec;
 use std::thread;
 use std::sync::mpsc;
@@ -18,7 +18,12 @@ pub fn spawn() -> (mpsc::Sender<Message>, mpsc::Receiver<String>) {
     let (tx_data, rx_data) = mpsc::channel();
 
     thread::spawn(move || {
-        let mut computer = Machine { memory: vec![14, 0, 0, 0, 1, 4, 0, 0], ..Machine::new() };
+        let mut computer = Machine {
+            memory: vec![14, 0, 0, 0, 1, 4, 0, 0],
+            counter: 0,
+            output: io::stdout(),
+            input: termion::async_stdin(),
+        };
         let mut paused = false;
 
         loop {
@@ -68,15 +73,15 @@ pub struct Machine<W: Write, R: Read> {
     pub input: R,
 }
 
-impl Machine<io::Stdout, termion::AsyncReader> {
+impl Machine<Cursor<Vec<u8>>, Cursor<Vec<u8>>> {
     pub fn new() -> Self {
         Machine {
             // Default to a valid program in memory.
             // This one is an infinite loop.
             memory: vec![1, 2, 0, 0],
             counter: 0,
-            output: io::stdout(),
-            input: termion::async_stdin(),
+            output: Cursor::new(Vec::new()),
+            input: Cursor::new(Vec::new()),
         }
     }
 }
@@ -493,17 +498,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_14() {
         // Refresh the screen
-        use std::io::Cursor;
-
-        let output = Cursor::new(Vec::new());
-        let input = Cursor::new(Vec::new());
-
-        let mut m = Machine {
-            memory: vec![14, 0, 0, 0],
-            counter: 0,
-            output: output,
-            input: input,
-        };
+        let mut m = Machine { memory: vec![14, 0, 0, 0], ..Machine::new() };
 
         // Move the program counter after rendering.
         assert_eq!(0, m.loc());
