@@ -258,10 +258,12 @@ impl<W: Write, R: Read> Machine<W, R> {
             15 => {
                 let mut bytes = Vec::new();
                 match self.input.read_to_end(&mut bytes) {
-                    Ok(size) => if size > 0 {
-                        self.write(a, bytes[size - 1] as u32);
-                        self.counter += 4;
-                    },
+                    Ok(size) => {
+                        if size > 0 {
+                            self.write(a, bytes[size - 1] as u32);
+                            self.counter += 4;
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -532,7 +534,7 @@ mod tests {
             memory: vec![15, 1, 0, 0],
             counter: 0,
             output: output,
-            input: input
+            input: input,
         };
 
         // Don't the program counter if reading failed.
@@ -553,7 +555,7 @@ mod tests {
             memory: vec![15, 1, 0, 0],
             counter: 0,
             output: output,
-            input: input
+            input: input,
         };
 
         // Move the program counter after reading.
