@@ -138,10 +138,13 @@ impl<W: Write, R: Read> Machine<W, R> {
         let end = end as usize;
         let memory = &self.memory[start..end];
 
-        self.output.write(sixel::clear().as_bytes()).unwrap();
-        self.output.write(sixel::begin().as_bytes()).unwrap();
-        self.output.write(sixel::from(memory, width, height, true).as_bytes()).unwrap();
-        self.output.write(sixel::end().as_bytes()).unwrap();
+        write!(self.output,
+               "{}{}{}{}",
+               termion::cursor::Goto(1, 1),
+               sixel::begin(),
+               sixel::from(memory, width, height, true),
+               sixel::end())
+            .unwrap();
         self.output.flush().unwrap();
     }
 

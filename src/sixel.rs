@@ -1,7 +1,3 @@
-pub fn clear() -> String {
-    "\x1b[1;1H".to_string()
-}
-
 pub fn begin() -> String {
     "\x1bPq".to_string()
 }
