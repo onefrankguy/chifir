@@ -248,11 +248,7 @@ impl<W: Write, R: Read> Machine<W, R> {
             13 => {
                 let b = self.read(b);
                 let c = self.read(c);
-                if b > 0 && c > 0 {
-                    self.write(a, 0);
-                } else {
-                    self.write(a, 1);
-                }
+                self.write(a, !(b & c));
                 self.counter += 4;
             }
 
@@ -455,46 +451,13 @@ mod tests {
     }
 
     #[test]
-    fn it_runs_opcode_13_false_false_branch() {
+    fn it_runs_opcode_13() {
         // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 0, 0], ..Machine::new() };
+        let mut m = Machine { memory: vec![13, 4, 5, 6, 0, 0xfffffffe, 0xfffffffd], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
-        assert_eq!(&vec![13, 4, 5, 6, 1, 0, 0], m.dump());
-        assert_eq!(4, m.loc());
-    }
-
-    #[test]
-    fn it_runs_opcode_13_false_true_branch() {
-        // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 0, 1], ..Machine::new() };
-
-        assert_eq!(0, m.loc());
-        m.step();
-        assert_eq!(&vec![13, 4, 5, 6, 1, 0, 1], m.dump());
-        assert_eq!(4, m.loc());
-    }
-
-    #[test]
-    fn it_runs_opcode_13_true_false_branch() {
-        // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 1, 0], ..Machine::new() };
-
-        assert_eq!(0, m.loc());
-        m.step();
-        assert_eq!(&vec![13, 4, 5, 6, 1, 1, 0], m.dump());
-        assert_eq!(4, m.loc());
-    }
-
-    #[test]
-    fn it_runs_opcode_13_true_true_branch() {
-        // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine { memory: vec![13, 4, 5, 6, 2, 1, 1], ..Machine::new() };
-
-        assert_eq!(0, m.loc());
-        m.step();
-        assert_eq!(&vec![13, 4, 5, 6, 0, 1, 1], m.dump());
+        assert_eq!(&vec![13, 4, 5, 6, 0x3, 0xfffffffe, 0xfffffffd], m.dump());
         assert_eq!(4, m.loc());
     }
 
