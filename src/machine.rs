@@ -159,6 +159,8 @@ impl<W: Write, R: Read> Machine<W, R> {
             2 => {
                 if 0 == self.read(b) {
                     self.counter = self.read(a);
+                } else {
+                    self.counter += 4;
                 }
             }
 
@@ -326,7 +328,7 @@ mod tests {
 
         assert_eq!(0, m.loc());
         m.step();
-        assert_eq!(0, m.loc());
+        assert_eq!(4, m.loc());
     }
 
     #[test]
@@ -453,7 +455,8 @@ mod tests {
     #[test]
     fn it_runs_opcode_13() {
         // M[A] <- NOT(M[B] AND M[C])
-        let mut m = Machine { memory: vec![13, 4, 5, 6, 0, 0xfffffffe, 0xfffffffd], ..Machine::new() };
+        let mut m =
+            Machine { memory: vec![13, 4, 5, 6, 0, 0xfffffffe, 0xfffffffd], ..Machine::new() };
 
         assert_eq!(0, m.loc());
         m.step();
