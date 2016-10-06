@@ -166,9 +166,9 @@ impl<W: Write, R: Read> Machine<W, R> {
                 let b = self.read(b);
                 let c = self.read(c);
                 if c > 0 {
-                  self.write(a, b / c);
+                    self.write(a, b / c);
                 } else {
-                  self.write(a, 0);
+                    self.write(a, 0);
                 }
                 self.counter += 4;
             }
@@ -178,9 +178,9 @@ impl<W: Write, R: Read> Machine<W, R> {
                 let b = self.read(b);
                 let c = self.read(c);
                 if c > 0 {
-                  self.write(a, b % c);
+                    self.write(a, b % c);
                 } else {
-                  self.write(a, 0);
+                    self.write(a, 0);
                 }
                 self.counter += 4;
             }
