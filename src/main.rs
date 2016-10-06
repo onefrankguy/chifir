@@ -1,53 +1,34 @@
 extern crate chifir;
+extern crate termion;
+
+use termion::raw::IntoRawMode;
+use termion::async_stdin;
 
 use std::io::{self, Write};
 
 fn main() {
-    println!("Welcome to Chifir!");
-    println!("");
-    println!("Type 'help' to get started.");
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock().into_raw_mode().unwrap();
+    let stdin = async_stdin();
 
-    let (tx, rx) = chifir::machine::spawn();
+    write!(stdout, "{}", termion::clear::All).unwrap();
 
-    loop {
-        print!("> ");
-        io::stdout().flush().unwrap();
+    let mut vm = chifir::machine::Machine {
+        memory: vec![
+            14,0,0,1,   // 00 - Clear the screen
+            15,6,0,113, // 04 - Read key press and store it in $6
+            8,3,7,6,    // 08 - $3 <- $7 - $6
+            2,15,3,20,  // 12 - If $3 = 0, then PC <- 20
+            1,19,0,4,   // 16 - Else PC <- 4
+            0,0,0,0,    // 20 - Break
+        ],
+        counter: 0,
+        output: stdout,
+        input: stdin,
+    };
 
-        let mut command = String::new();
-
-        io::stdin().read_line(&mut command).expect("Failed to read command");
-
-        match command.trim() {
-            "help" => {
-                println!("help, pause, resume, step, inspect, quit");
-            }
-
-            "pause" => {
-                tx.send(chifir::machine::Message::Pause).unwrap();
-            }
-
-            "resume" => {
-                tx.send(chifir::machine::Message::Resume).unwrap();
-            }
-
-            "step" => {
-                tx.send(chifir::machine::Message::Step).unwrap();
-                tx.send(chifir::machine::Message::Inspect).unwrap();
-                println!("{}", rx.recv().unwrap());
-            }
-
-            "inspect" => {
-                tx.send(chifir::machine::Message::Inspect).unwrap();
-                println!("{}", rx.recv().unwrap());
-            }
-
-            "quit" => {
-                break;
-            }
-
-            _ => {
-                continue;
-            }
-        }
+    vm.step();
+    while vm.next() != 0 {
+        vm.step();
     }
 }

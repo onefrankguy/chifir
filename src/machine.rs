@@ -1,74 +1,12 @@
 use termion;
 
 use super::sixel;
-use std::io::{self, Write, Read, Cursor};
+use std::io::{Write, Read, Cursor};
 use std::vec::Vec;
-use std::thread;
-use std::sync::mpsc;
-
-pub enum Message {
-    Pause,
-    Resume,
-    Step,
-    Inspect,
-}
-
-pub fn spawn() -> (mpsc::Sender<Message>, mpsc::Receiver<String>) {
-    let (tx_message, rx_message) = mpsc::channel();
-    let (tx_data, rx_data) = mpsc::channel();
-
-    thread::spawn(move || {
-        let mut computer = Machine {
-            memory: vec![14, 0, 0, 0, 1, 4, 0, 0],
-            counter: 0,
-            output: io::stdout(),
-            input: termion::async_stdin(),
-        };
-        let mut paused = false;
-
-        loop {
-            let message = rx_message.try_recv();
-            if message.is_ok() {
-                match message.unwrap() {
-                    Message::Pause => {
-                        paused = true;
-                    }
-
-                    Message::Resume => {
-                        paused = false;
-                    }
-
-                    Message::Step => {
-                        paused = true;
-                        computer.step();
-                    }
-
-                    Message::Inspect => {
-                        let state = if paused { "paused" } else { "running" };
-                        let data = format!("STATE {}\nPC {}\nM {:?}",
-                                           state,
-                                           computer.loc(),
-                                           computer.dump());
-                        tx_data.send(data).unwrap();
-                    }
-                }
-            }
-
-            thread::yield_now();
-
-            if !paused {
-                computer.step();
-            }
-
-        }
-    });
-
-    return (tx_message, rx_data);
-}
 
 pub struct Machine<W: Write, R: Read> {
-    memory: Vec<u32>,
-    counter: u32,
+    pub memory: Vec<u32>,
+    pub counter: u32,
     pub output: W,
     pub input: R,
 }
@@ -89,6 +27,11 @@ impl Machine<Cursor<Vec<u8>>, Cursor<Vec<u8>>> {
 impl<W: Write, R: Read> Machine<W, R> {
     pub fn loc(&self) -> u32 {
         self.counter
+    }
+
+    pub fn next(&mut self) -> u32 {
+        let counter = self.counter;
+        self.read(counter)
     }
 
     pub fn dump(&self) -> &Vec<u32> {
