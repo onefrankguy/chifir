@@ -141,8 +141,7 @@ impl<W: Write, R: Read> Machine<W, R> {
             7 => {
                 let b = self.read(b);
                 let c = self.read(c);
-                let (result, _) = b.overflowing_add(c);
-                self.write(a, result);
+                self.write(a, b.wrapping_add(c));
                 self.counter += 4;
             }
 
@@ -150,8 +149,7 @@ impl<W: Write, R: Read> Machine<W, R> {
             8 => {
                 let b = self.read(b);
                 let c = self.read(c);
-                let (result, _) = b.overflowing_sub(c);
-                self.write(a, result);
+                self.write(a, b.wrapping_sub(c));
                 self.counter += 4;
             }
 
@@ -159,8 +157,7 @@ impl<W: Write, R: Read> Machine<W, R> {
             9 => {
                 let b = self.read(b);
                 let c = self.read(c);
-                let (result, _) = b.overflowing_mul(c);
-                self.write(a, result);
+                self.write(a, b.wrapping_mul(c));
                 self.counter += 4;
             }
 
