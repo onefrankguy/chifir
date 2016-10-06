@@ -165,7 +165,11 @@ impl<W: Write, R: Read> Machine<W, R> {
             10 => {
                 let b = self.read(b);
                 let c = self.read(c);
-                self.write(a, b / c);
+                if c > 0 {
+                  self.write(a, b / c);
+                } else {
+                  self.write(a, 0);
+                }
                 self.counter += 4;
             }
 
@@ -392,6 +396,17 @@ mod tests {
         assert_eq!(0, m.loc());
         m.step();
         assert_eq!(&vec![10, 4, 5, 6, 5, 11, 2], m.dump());
+        assert_eq!(4, m.loc());
+    }
+
+    #[test]
+    fn it_prevents_divide_by_zero_errors_when_running_opcode_10() {
+        // M[A] <- M[B] / M[C]
+        let mut m = Machine { memory: vec![10, 4, 5, 6, 1, 11, 0], ..Machine::new() };
+
+        assert_eq!(0, m.loc());
+        m.step();
+        assert_eq!(&vec![10, 4, 5, 6, 0, 11, 0], m.dump());
         assert_eq!(4, m.loc());
     }
 
