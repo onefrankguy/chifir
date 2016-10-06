@@ -159,7 +159,8 @@ impl<W: Write, R: Read> Machine<W, R> {
             9 => {
                 let b = self.read(b);
                 let c = self.read(c);
-                self.write(a, b * c);
+                let (result, _) = b.overflowing_mul(c);
+                self.write(a, result);
                 self.counter += 4;
             }
 
@@ -372,6 +373,17 @@ mod tests {
         assert_eq!(0, m.loc());
         m.step();
         assert_eq!(&vec![9, 4, 5, 6, 22, 11, 2], m.dump());
+        assert_eq!(4, m.loc());
+    }
+
+    #[test]
+    fn it_prevents_overflow_when_running_opcode_9() {
+        // M[A] <- M[B] * M[C]
+        let mut m = Machine { memory: vec![9, 4, 5, 6, 0, u32::max_value(), 2], ..Machine::new() };
+
+        assert_eq!(0, m.loc());
+        m.step();
+        assert_eq!(&vec![9, 4, 5, 6, 4294967294, u32::max_value(), 2], m.dump());
         assert_eq!(4, m.loc());
     }
 
