@@ -30,7 +30,6 @@ fn main() {
         input: stdin,
     };
 
-    vm.step();
     while vm.next() != 0 {
         vm.step();
     }
