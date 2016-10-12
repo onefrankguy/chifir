@@ -11,7 +11,12 @@ fn main() {
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
     let stdin = async_stdin();
 
-    write!(stdout, "{}", termion::clear::All).unwrap();
+    write!(stdout,
+           "{}{}",
+           termion::clear::All,
+           termion::cursor::Goto(1, 1))
+        .unwrap();
+    stdout.flush().unwrap();
 
     let mut vm = chifir::machine::Machine {
         memory: vec![
