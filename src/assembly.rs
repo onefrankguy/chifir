@@ -5,8 +5,8 @@ use std::string::String;
 
 impl_rdp! {
     grammar! {
-        program = { instruction+ }
-        instruction = { opcode ~ operand ~ operand ~ operand ~ ["\n"] }
+        program = { instruction ~ (["\n"] ~ instruction)* }
+        instruction = { opcode ~ operand ~ operand ~ operand }
         opcode = _{ number }
         operand = _{ number }
 
@@ -24,19 +24,19 @@ mod tests {
 
     #[test]
     fn it_parses_programs_as_machine_code() {
-        let mut parser = Rdp::new(StringInput::new("0 a b c\n1 2 3 4\n"));
+        let mut parser = Rdp::new(StringInput::new("0 a b c\n1 2 3 4"));
 
         assert!(parser.program());
         assert!(parser.end());
 
         let tokens = vec![
-            Token::new(Rule::program, 0, 16),
-            Token::new(Rule::instruction, 0, 8),
+            Token::new(Rule::program, 0, 15),
+            Token::new(Rule::instruction, 0, 7),
             Token::new(Rule::number, 0, 1),
             Token::new(Rule::number, 2, 3),
             Token::new(Rule::number, 4, 5),
             Token::new(Rule::number, 6, 7),
-            Token::new(Rule::instruction, 8, 16),
+            Token::new(Rule::instruction, 8, 15),
             Token::new(Rule::number, 8, 9),
             Token::new(Rule::number, 10, 11),
             Token::new(Rule::number, 12, 13),
