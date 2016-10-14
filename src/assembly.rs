@@ -8,9 +8,10 @@ impl_rdp! {
     grammar! {
         program = _{ instruction ~ (["\n"] ~ instruction)* }
         instruction = _{ opcode ~ operand ~ operand ~ operand }
-        opcode = _{ number }
+        opcode = _{ brk | number }
         operand = _{ number }
 
+        brk = { [i"brk"] }
         number = @{ (['0'..'9'] | ['a'..'f'] | ['A'..'F'])+ }
 
         whitespace = _{ [" "] }
@@ -26,6 +27,10 @@ impl_rdp! {
         }
 
         _numbers(&self) -> LinkedList<u32> {
+            (_: brk, mut tail: _numbers()) => {
+                tail.push_front(0x0);
+                tail
+            },
             (&head: number, mut tail: _numbers()) => {
                 tail.push_front(u32::from_str_radix(head, 16).unwrap());
                 tail
@@ -51,13 +56,10 @@ mod tests {
         assert!(parser.end());
 
         let tokens = vec![
-            // Token::new(Rule::program, 0, 15),
-            // Token::new(Rule::instruction, 0, 7),
             Token::new(Rule::number, 0, 1),
             Token::new(Rule::number, 2, 3),
             Token::new(Rule::number, 4, 5),
             Token::new(Rule::number, 6, 7),
-            // Token::new(Rule::instruction, 8, 15),
             Token::new(Rule::number, 8, 9),
             Token::new(Rule::number, 10, 11),
             Token::new(Rule::number, 12, 13),
@@ -67,5 +69,23 @@ mod tests {
         assert_eq!(parser.queue(), &tokens);
         assert_eq!(parser.compile(),
                    vec![0x0, 0xa, 0xb, 0xc, 0x1, 0x2, 0x3, 0x4]);
+    }
+
+    #[test]
+    fn it_parses_opcode_brk() {
+        let mut parser = Rdp::new(StringInput::new("brk a b c"));
+
+        assert!(parser.program());
+        assert!(parser.end());
+
+        let tokens = vec![
+            Token::new(Rule::brk, 0, 3),
+            Token::new(Rule::number, 4, 5),
+            Token::new(Rule::number, 6, 7),
+            Token::new(Rule::number, 8, 9),
+        ];
+
+        assert_eq!(parser.queue(), &tokens);
+        assert_eq!(parser.compile(), vec![0x0, 0xa, 0xb, 0xc]);
     }
 }
