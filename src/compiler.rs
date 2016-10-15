@@ -99,18 +99,18 @@ impl Compiler {
                     self.bytecodes.push(opcode);
 
                     // Operand A
-                    let bytecode_a = bytecodes.next();
-                    let operand_a = self.parse_operand(bytecode_a, opcode_address);
+                    let operand_a = bytecodes.next();
+                    let operand_a = self.parse_operand(operand_a, opcode_address);
                     self.bytecodes.push(operand_a);
 
                     // Operand B
-                    let bytecode_b = bytecodes.next();
-                    let operand_b = self.parse_operand(bytecode_b, opcode_address);
+                    let operand_b = bytecodes.next();
+                    let operand_b = self.parse_operand(operand_b, opcode_address);
                     self.bytecodes.push(operand_b);
 
                     // Operand C
-                    let bytecode_c = bytecodes.next();
-                    let operand_c = self.parse_operand(bytecode_c, opcode_address);
+                    let operand_c = bytecodes.next();
+                    let operand_c = self.parse_operand(operand_c, opcode_address);
                     self.bytecodes.push(operand_c);
                 }
             }
