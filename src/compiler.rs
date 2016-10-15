@@ -16,12 +16,26 @@ impl Compiler {
 
         while let Some(c) = chars.next() {
             match c {
-                // Line Feed
-                // Vertical Tab
-                // Form Feed
+                // Line Feed | Vertical Tab | Form Feed
                 '\u{000A}' | '\u{000B}' | '\u{000C}' => {
                     self.lines.push(line);
                     line = String::new();
+                }
+
+                // Carriage Return
+                '\u{000D}' => {
+                    self.lines.push(line);
+                    line = String::new();
+
+                    // Carriage Return + Line Feed
+                    match chars.next() {
+                        Some(n) => {
+                            if n != '\u{000A}' {
+                                line.push(n);
+                            }
+                        }
+                        None => {}
+                    }
                 }
 
                 _ => {
@@ -65,9 +79,25 @@ mod tests {
     }
 
     #[test]
+    fn it_splits_lines_by_carriage_return() {
+        let mut compiler = Compiler::new();
+        compiler.parse("0 0 0 0\r0 0 0 0");
+
+        assert_eq!(compiler.lines.len(), 2);
+    }
+
+    #[test]
+    fn it_splits_lines_by_carriage_return_line_feed() {
+        let mut compiler = Compiler::new();
+        compiler.parse("0 0 0 0\r\n0 0 0 0");
+
+        assert_eq!(compiler.lines.len(), 2);
+    }
+
+    #[test]
     fn it_ignors_trailing_separators() {
         let mut compiler = Compiler::new();
-        compiler.parse("0 0 0 0\n0 0 0 0\n");
+        compiler.parse("0 0 0 0\r\n0 0 0 0\r\n");
 
         assert_eq!(compiler.lines.len(), 2);
     }
