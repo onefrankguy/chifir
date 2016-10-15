@@ -42,6 +42,54 @@ impl Compiler {
                         Some("brk") => {
                             self.bytecodes.push(0);
                         }
+                        Some("lpc") => {
+                            self.bytecodes.push(1);
+                        }
+                        Some("beq") => {
+                            self.bytecodes.push(2);
+                        }
+                        Some("spc") => {
+                            self.bytecodes.push(3);
+                        }
+                        Some("lea") => {
+                            self.bytecodes.push(4);
+                        }
+                        Some("lra") => {
+                            self.bytecodes.push(5);
+                        }
+                        Some("sra") => {
+                            self.bytecodes.push(6);
+                        }
+                        Some("add") => {
+                            self.bytecodes.push(7);
+                        }
+                        Some("sub") => {
+                            self.bytecodes.push(8);
+                        }
+                        Some("mul") => {
+                            self.bytecodes.push(9);
+                        }
+                        Some("div") => {
+                            self.bytecodes.push(10);
+                        }
+                        Some("mod") => {
+                            self.bytecodes.push(11);
+                        }
+                        Some("cmp") => {
+                            self.bytecodes.push(12);
+                        }
+                        Some("nad") => {
+                            self.bytecodes.push(13);
+                        }
+                        Some("drw") => {
+                            self.bytecodes.push(14);
+                        }
+                        Some("key") => {
+                            self.bytecodes.push(15);
+                        }
+                        Some("nop") => {
+                            self.bytecodes.push(16);
+                        }
                         Some(opcode) => {
                             match u32::from_str_radix(opcode, 16) {
                                 Ok(bytecode) => {
@@ -433,5 +481,58 @@ mod tests {
         compiler.parse("brk f f end\nend:");
 
         assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0xf, 0x4]);
+    }
+
+    #[test]
+    fn it_compiles_the_simple_ctrl_c_example() {
+        let mut compiler = Compiler::new();
+
+        compiler.parse(" f 2 0 3  ; Read key press and store it in M[2]\n 8 2 2 3  ; Subtract M[3] \
+                    from M[2] and store the result in M[2]\n 2 b 2 f  ; If M[2] equals 0, then \
+                    set PC to M[b]\n 1 e 0 0  ; Else, set PC to M[e] ");
+
+        assert_eq!(compiler.bytecodes,
+                   vec![
+            0xf, 0x2, 0x0, 0x3,
+            0x8, 0x2, 0x2, 0x3,
+            0x2, 0xb, 0x2, 0xf,
+            0x1, 0xe, 0x0, 0x0,
+        ]);
+    }
+
+    #[test]
+    fn it_compiles_the_complex_ctrl_c_example() {
+        let mut compiler = Compiler::new();
+
+        compiler.parse(" \
+        x:\n \
+          nop 0 0 0\n \
+        \n \
+        ctrl-c:\n \
+          add 4 9 a\n \
+          nop 3 0 0\n \
+        \n \
+        check-ctrl-c:\n \
+          key x 0 0              ; Read key press and store it in M[x]\n \
+          sub x x ctrl-c         ; Subtract M[ctrl-c] from M[x] and store the result in M[x]\n \
+          beq 17 x exit          ; If M[x] equals 0, then set PC to M[17]\n \
+          lpc 1a check-ctrl-c 0  ; Else, set PC to M[1a]\n \
+        \n \
+        exit:\n \
+          brk 0 0 0 \
+        ");
+
+        let mut labels = HashMap::new();
+        labels.insert("x".to_string(), 0);
+        labels.insert("ctrl-c".to_string(), 4);
+        labels.insert("check-ctrl-c".to_string(), 12);
+        labels.insert("exit".to_string(), 28);
+
+        assert_eq!(compiler.labels, labels);
+
+        assert_eq!(compiler.bytecodes,
+                   vec![0x10, 0x0, 0x0, 0x0, 0x7, 0x4, 0x9, 0xa, 0x10, 0x3, 0x0, 0x0, 0xf, 0x0,
+                        0x0, 0x0, 0x8, 0x0, 0x0, 0x4, 0x2, 0x17, 0x0, 0x1c, 0x1, 0x1a, 0xc, 0x0,
+                        0x0, 0x0, 0x0, 0x0]);
     }
 }
