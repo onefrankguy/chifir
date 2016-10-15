@@ -91,6 +91,8 @@ impl<W: Write, R: Read> Computer<W, R> {
 
     /// Copies the elements from `iter` into memory.
     ///
+    /// The program counter will be reset to zero.
+    ///
     /// # Example
     ///
     /// ```
@@ -102,18 +104,30 @@ impl<W: Write, R: Read> Computer<W, R> {
     /// let mut computer = Computer::new(input, output);
     ///
     /// computer.load(vec![
-    ///     1, 2, 3, 4
+    ///     1, 2, 4, 0
     /// ]);
     ///
-    /// assert_eq!([1, 2, 3, 4], computer.dump());
+    /// assert_eq!([1, 2, 4, 0], computer.dump());
+    ///
+    /// computer.step();
+    /// computer.step();
+    ///
+    /// assert_eq!(4, computer.position());
+    ///
+    /// computer.load(vec![]);
+    ///
+    /// assert_eq!([0; 0], computer.dump());
+    /// assert_eq!(0, computer.position());
     /// ```
     pub fn load<I: IntoIterator<Item = u32>>(&mut self, iter: I) {
-        self.counter = 0;
         self.memory.clear();
         self.memory.extend(iter);
+        self.counter = 0;
     }
 
     /// Copies the elements from `slice` into memory.
+    ///
+    /// The program counter will be reset to zero.
     ///
     /// # Example
     ///
@@ -126,15 +140,25 @@ impl<W: Write, R: Read> Computer<W, R> {
     /// let mut computer = Computer::new(input, output);
     ///
     /// computer.load_from_slice(&[
-    ///     1, 2, 3, 4
+    ///     1, 2, 4, 0
     /// ]);
     ///
-    /// assert_eq!([1, 2, 3, 4], computer.dump());
+    /// assert_eq!([1, 2, 4, 0], computer.dump());
+    ///
+    /// computer.step();
+    /// computer.step();
+    ///
+    /// assert_eq!(4, computer.position());
+    ///
+    /// computer.load(vec![]);
+    ///
+    /// assert_eq!([0; 0], computer.dump());
+    /// assert_eq!(0, computer.position());
     /// ```
     pub fn load_from_slice(&mut self, slice: &[u32]) {
-        self.counter = 0;
         self.memory.clear();
         self.memory.extend_from_slice(slice);
+        self.counter = 0;
     }
 
     /// Extracts a slice containing the contents of memory.
