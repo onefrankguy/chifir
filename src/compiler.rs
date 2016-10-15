@@ -113,6 +113,43 @@
 //! ]);
 //! ```
 //!
+//! Labels can be referenced before they're defined. This makes them useful for
+//! declaring storage locations and constants.
+//!
+//! ```
+//! let mut compiler = chifir::compiler::Compiler::new();
+//!
+//! compiler.parse("
+//! ; Halt when Ctrl+C is pressed.
+//!
+//! check-ctrl-c:
+//!   key x 0 0
+//!   sub x x ctrl-c
+//!   beq b 2 exit
+//!   lpc e check-ctrl-c 0
+//!
+//! exit:
+//!   brk 0 0 0
+//!
+//! x:
+//!   nop 0 0 0
+//!
+//! ctrl-c:
+//!   lea 18 1b 3
+//! ");
+//!
+//! assert_eq!(compiler.bytecodes, vec![
+//! 0xf, 0x14, 0x0, 0x0,
+//! 0x8, 0x14, 0x14, 0x18,
+//! 0x2, 0xb, 0x2, 0x10,
+//! 0x1, 0xe, 0x0, 0x0,
+//! 0x0, 0x0, 0x0, 0x0,
+//! 0x10, 0x0, 0x0, 0x0,
+//! 0x4, 0x18, 0x1b, 0x3
+//! ]);
+//! ```
+//!
+//!
 //! # Table 1
 //!
 //! A complete list of all Chifir opcodes.
