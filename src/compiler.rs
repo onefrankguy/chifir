@@ -1,9 +1,11 @@
 use std::vec::Vec;
 use std::string::String;
+use std::collections::HashMap;
 
 struct Compiler {
     pub lines: Vec<String>,
     pub instructions: Vec<String>,
+    pub labels: HashMap<String, u32>,
 }
 
 impl Compiler {
@@ -11,12 +13,30 @@ impl Compiler {
         Compiler {
             lines: Vec::new(),
             instructions: Vec::new(),
+            labels: HashMap::new(),
         }
     }
 
     pub fn parse(&mut self, assembly: &str) {
         self.split_lines(assembly);
         self.strip_comments();
+        self.compile_labels();
+    }
+
+    fn compile_labels(&mut self) {
+        let mut instructions = self.instructions.iter();
+        let mut address = 0;
+
+        while let Some(instruction) = instructions.next() {
+            match instruction.find(':') {
+                Some(index) => {
+                    self.labels.insert(instruction.split_at(index).0.to_string(), address);
+                }
+                None => {
+                    address += 4;
+                }
+            }
+        }
     }
 
     fn strip_comments(&mut self) {
@@ -76,6 +96,7 @@ impl Compiler {
 #[cfg(test)]
 mod tests {
     use super::Compiler;
+    use std::collections::HashMap;
 
     #[test]
     fn it_splits_lines_by_line_feed() {
@@ -219,5 +240,40 @@ mod tests {
 
         assert_eq!(compiler.lines.len(), 1);
         assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
+    }
+
+    #[test]
+    fn it_compiles_addresses_for_labels() {
+        let mut compiler = Compiler::new();
+        compiler.parse("first:\nsecond:\n0 0 0 0\nthird:");
+
+        let mut labels = HashMap::new();
+        labels.insert("first".to_string(), 0);
+        labels.insert("second".to_string(), 0);
+        labels.insert("third".to_string(), 4);
+
+        assert_eq!(compiler.labels, labels);
+    }
+
+    #[test]
+    fn it_lets_the_last_label_win() {
+        let mut compiler = Compiler::new();
+        compiler.parse("label:\n0 0 0 0\nlabel:");
+
+        let mut labels = HashMap::new();
+        labels.insert("label".to_string(), 4);
+
+        assert_eq!(compiler.labels, labels);
+    }
+
+    #[test]
+    fn it_ignores_trailing_label_characters() {
+        let mut compiler = Compiler::new();
+        compiler.parse("label:with bits\n0 0 0 0\nlabel:with bytes");
+
+        let mut labels = HashMap::new();
+        labels.insert("label".to_string(), 4);
+
+        assert_eq!(compiler.labels, labels);
     }
 }
