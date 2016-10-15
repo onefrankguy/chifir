@@ -26,12 +26,8 @@ fn main() {
     1 f 0 0  ; 12 - Else PC <- 0
     ");
 
-    let mut vm = chifir::computer::Computer {
-        memory: compiler.bytecodes.clone(),
-        counter: 0,
-        output: stdout,
-        input: stdin,
-    };
+    let mut vm = chifir::computer::Computer::with_io(stdin, stdout);
+    vm.load(compiler.bytecodes);
 
     while vm.next() != 0 {
         vm.step();

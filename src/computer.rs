@@ -25,6 +25,35 @@ impl Computer<Cursor<Vec<u8>>, Cursor<Vec<u8>>> {
 }
 
 impl<W: Write, R: Read> Computer<W, R> {
+    /// Create a new `Computer<W, R>` bound to the I/O channels.
+    ///
+    /// The computer will start without any memory. The program counter will
+    /// start at zero.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use chifir::computer::Computer;
+    /// use std::io::Cursor;
+    /// use std::vec::Vec;
+    ///
+    /// let input = Cursor::new(Vec::new());
+    /// let output = Cursor::new(Vec::new());
+    ///
+    /// let computer = Computer::with_io(input, output);
+    ///
+    /// assert_eq!([0; 0], computer.dump());
+    /// assert_eq!(0, computer.position());
+    /// ```
+    pub fn with_io(input: R, output: W) -> Self {
+        Computer {
+            memory: Vec::new(),
+            counter: 0,
+            output: output,
+            input: input,
+        }
+    }
+
     /// Returns the current location of the program counter.
     ///
     /// # Examples
