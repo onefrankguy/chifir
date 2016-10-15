@@ -1,10 +1,9 @@
-//! The `chifir::compiler` crate provides functions for transforming assembly
-//! into Chifir bytecodes.
+//! A compiler for transforming assembly into bytecodes.
 //!
 //! # Examples
 //!
 //! This is the smallest Chifir program that does something useful. It exits
-//! when //! <key>Ctrl-C</key> is pressed.
+//! when <kbd>Ctrl</kbd> + <kbd>C</kbd> is pressed.
 //!
 //! ```
 //! let mut compiler = chifir::compiler::Compiler::new();
@@ -24,9 +23,8 @@
 //! ]);
 //! ```
 //!
-//! Because raw machine code is hard to read, Chifir programs can include comments.
-//! Comments start with a semicolon and go to the end of the line. Here's the above
-//! program with comments.
+//! Because raw machine code is hard to read, assembly programs can include
+//! comments. Comments start with a semicolon and go to the end of the line.
 //!
 //! ```
 //! let mut compiler = chifir::compiler::Compiler::new();
@@ -47,14 +45,14 @@
 //! ```
 //!
 //! The term **PC** in the comments refers to the program counter. Chifir starts
-//! with the program counter at 0. The term **M[X]** in the comments refers to the
-//! **X**<sup>th</sup> location in memory. Memory is allocated when it's accessed,
-//! and Chifir programs can use up to 16 GiB of memory.
+//! with the program counter at 0. The term **M[X]** in the comments refers to
+//! the **X**<sup>th</sup> location in memory. Memory is allocated when it's
+//! accessed, and Chifir programs can use up to 16 GiB of memory.
 //!
-//! Every opcode and operand in a Chifir program is 32 bits. This Chifir program is
-//! written in machine code with hexadecimal values for the opcodes and operands.
-//! Because hex values for opcodes are hard to memorize, Chifir programs can use
-//! three letter abbreviations for the opcodes instead.
+//! Every opcode and operand in a Chifir program is 32 bits. This Chifir program
+//! is written in assembly with hexadecimal values for the opcodes and operands.
+//! Because hex values for opcodes are hard to memorize, assembly programs can
+//! use three letter abbreviations for the opcodes instead.
 //!
 //! ```
 //! let mut compiler = chifir::compiler::Compiler::new();
@@ -73,6 +71,33 @@
 //! 0x1, 0xe, 0x0, 0x0
 //! ]);
 //! ```
+//!
+//! [Table 1](#table-1) has a full list of Chifir opcodes.
+//!
+//!
+//! # Table 1 #
+//!
+//! A complete list of all Chifir opcodes.
+//!
+//! |Opcode|Abbreviation|Semantics                                                |
+//! |:----:|:-----------|:--------------------------------------------------------|
+//! |0     |`brk`       |Halt execution                                           |
+//! |1     |`lpc`       |PC &larr; M[A]                                           |
+//! |2     |`beq`       |If M[B] &equals; 0, then PC &larr; M[A]                  |
+//! |3     |`spc`       |M[A] &larr; PC                                           |
+//! |4     |`lea`       |M[A] &larr; M[B]                                         |
+//! |5     |`lra`       |M[A] &larr; M[M[B]]                                      |
+//! |6     |`sra`       |M[M[B]] &larr; M[A]                                      |
+//! |7     |`add`       |M[A] &larr; M[B] &plus; M[C]                             |
+//! |8     |`sub`       |M[A] &larr; M[B] &minus; M[C]                            |
+//! |9     |`mul`       |M[A] &larr; M[B] &times; M[C]                            |
+//! |10    |`div`       |M[A] &larr; M[B] &divide; M[C]                           |
+//! |11    |`mod`       |M[A] &larr; M[B] modulo M[C]                             |
+//! |12    |`cmp`       |If M[B] &lt; M[C], then M[A] &larr; 1, else M[A] &larr; 0|
+//! |13    |`nad`       |M[A] &larr; NOT(M[B} AND M[C])                           |
+//! |14    |`drw`       |Refresh the screen                                       |
+//! |15    |`key`       |Get the last key pressed and store it in M[A]            |
+//! |16    |`nop`       |Skip this instruction                                    |
 
 use std::vec::Vec;
 use std::string::String;
@@ -102,29 +127,9 @@ impl Compiler {
         self.compile_bytecodes();
     }
 
-    /// This function transforms an opcode into a bytecode. The following tabl
-    /// lists all the valid opcodes.
-    ///
-    /// |Opcode|Abbreviation|Semantics                                                |
-    /// |:----:|:-----------|:--------------------------------------------------------|
-    /// |0     |`brk`       |Halt execution                                           |
-    /// |1     |`lpc`       |PC &larr; M[A]                                           |
-    /// |2     |`beq`       |If M[B] &equals; 0, then PC &larr; M[A]                  |
-    /// |3     |`spc`       |M[A] &larr; PC                                           |
-    /// |4     |`lea`       |M[A] &larr; M[B]                                         |
-    /// |5     |`lra`       |M[A] &larr; M[M[B]]                                      |
-    /// |6     |`sra`       |M[M[B]] &larr; M[A]                                      |
-    /// |7     |`add`       |M[A] &larr; M[B] &plus; M[C]                             |
-    /// |8     |`sub`       |M[A] &larr; M[B] &minus; M[C]                            |
-    /// |9     |`mul`       |M[A] &larr; M[B] &times; M[C]                            |
-    /// |10    |`div`       |M[A] &larr; M[B] &divide; M[C]                           |
-    /// |11    |`mod`       |M[A] &larr; M[B] modulo M[C]                             |
-    /// |12    |`cmp`       |If M[B] &lt; M[C], then M[A] &larr; 1, else M[A] &larr; 0|
-    /// |13    |`nad`       |M[A] &larr; NOT(M[B} AND M[C])                           |
-    /// |14    |`drw`       |Refresh the screen                                       |
-    /// |15    |`key`       |Get the last key pressed and store it in M[A]            |
-    /// |16    |`nop`       |Skip this instruction                                    |
-    ///
+    // Transform an opcode into a bytecode. Undefined opcodes, or thoses that
+    // fail to parse, are treated as zero. This maintains the concept of all
+    // uninitialized memory being zeroed out.
     fn parse_opcode(&self, opcode: Option<&str>) -> u32 {
         match opcode {
             Some("brk") => 0,
