@@ -16,8 +16,8 @@ impl Compiler {
 
         while let Some(c) = chars.next() {
             match c {
-                // Line Feed | Vertical Tab | Form Feed
-                '\u{000A}' | '\u{000B}' | '\u{000C}' => {
+                // Line Feed | Vertical Tab | Form Feed | Next Line
+                '\u{000A}' | '\u{000B}' | '\u{000C}' | '\u{0085}' => {
                     self.lines.push(line);
                     line = String::new();
                 }
@@ -90,6 +90,14 @@ mod tests {
     fn it_splits_lines_by_carriage_return_line_feed() {
         let mut compiler = Compiler::new();
         compiler.parse("0 0 0 0\r\n0 0 0 0");
+
+        assert_eq!(compiler.lines.len(), 2);
+    }
+
+    #[test]
+    fn it_splits_lines_by_next_line() {
+        let mut compiler = Compiler::new();
+        compiler.parse("0 0 0 0\u{0085}0 0 0 0");
 
         assert_eq!(compiler.lines.len(), 2);
     }
