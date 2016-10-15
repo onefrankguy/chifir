@@ -6,6 +6,7 @@ struct Compiler {
     pub lines: Vec<String>,
     pub instructions: Vec<String>,
     pub labels: HashMap<String, u32>,
+    pub bytecodes: Vec<u32>,
 }
 
 impl Compiler {
@@ -14,6 +15,7 @@ impl Compiler {
             lines: Vec::new(),
             instructions: Vec::new(),
             labels: HashMap::new(),
+            bytecodes: Vec::new(),
         }
     }
 
@@ -21,6 +23,36 @@ impl Compiler {
         self.split_lines(assembly);
         self.strip_comments();
         self.compile_labels();
+        self.compile_bytecodes();
+    }
+
+    fn compile_bytecodes(&mut self) {
+        let mut instructions = self.instructions.iter();
+
+        while let Some(instruction) = instructions.next() {
+            match instruction.find(':') {
+                Some(_) => {
+                    // Ignore labels
+                }
+                None => {
+                    let mut bytecodes = instruction.split_whitespace();
+                    match bytecodes.next() {
+                        Some("brk") => {
+                            self.bytecodes.push(0);
+                        }
+                        Some(opcode) => {
+                            match u32::from_str_radix(opcode, 16) {
+                                Ok(bytecode) => {
+                                    self.bytecodes.push(bytecode);
+                                }
+                                _ => {}
+                            }
+                        }
+                        None => {}
+                    }
+                }
+            }
+        }
     }
 
     fn compile_labels(&mut self) {
@@ -275,5 +307,21 @@ mod tests {
         labels.insert("label".to_string(), 4);
 
         assert_eq!(compiler.labels, labels);
+    }
+
+    #[test]
+    fn it_parses_hex_for_opcode_0() {
+        let mut compiler = Compiler::new();
+        compiler.parse("0 0 0 0");
+
+        assert_eq!(compiler.bytecodes, vec![0]);
+    }
+
+    #[test]
+    fn it_parses_brk_as_opcode_0() {
+        let mut compiler = Compiler::new();
+        compiler.parse("brk 0 0 0");
+
+        assert_eq!(compiler.bytecodes, vec![0]);
     }
 }
