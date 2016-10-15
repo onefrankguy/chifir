@@ -25,7 +25,6 @@ impl Computer<Cursor<Vec<u8>>, Cursor<Vec<u8>>> {
 }
 
 impl<W: Write, R: Read> Computer<W, R> {
-
     /// Returns the current location of the program counter.
     ///
     /// # Examples
@@ -68,6 +67,42 @@ impl<W: Write, R: Read> Computer<W, R> {
     pub fn next(&mut self) -> u32 {
         let counter = self.counter;
         self.read(counter)
+    }
+
+    /// Copies the elements from `iter` into memory.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use chifir::computer::Computer;
+    ///
+    /// let mut computer = Computer::new();
+    ///
+    /// computer.load(vec![1, 2, 3, 4]);
+    ///
+    /// assert_eq!(&vec![1, 2, 3, 4], computer.dump());
+    /// ```
+    pub fn load<I: IntoIterator<Item = u32>>(&mut self, iter: I) {
+        self.memory.clear();
+        self.memory.extend(iter);
+    }
+
+    /// Copies the elements from `slice` into memory.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use chifir::computer::Computer;
+    ///
+    /// let mut computer = Computer::new();
+    ///
+    /// computer.load_from_slice(&[1, 2, 3, 4]);
+    ///
+    /// assert_eq!(&vec![1, 2, 3, 4], computer.dump());
+    /// ```
+    pub fn load_from_slice(&mut self, slice: &[u32]) {
+        self.memory.clear();
+        self.memory.extend_from_slice(slice);
     }
 
     pub fn dump(&self) -> &Vec<u32> {
@@ -321,7 +356,8 @@ mod tests {
     #[test]
     fn it_runs_opcode_0() {
         // Halt execution
-        let mut m = Computer { memory: vec![0], ..Computer::new() };
+        let mut m = Computer::new();
+        m.load(vec![0]);
 
         assert_eq!(0, m.position());
         m.step();
