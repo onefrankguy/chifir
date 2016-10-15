@@ -1,3 +1,79 @@
+//! The `chifir::compiler` crate provides functions for transforming assembly
+//! into Chifir bytecodes.
+//!
+//! # Examples
+//!
+//! This is the smallest Chifir program that does something useful. It exits
+//! when //! <key>Ctrl-C</key> is pressed.
+//!
+//! ```
+//! let mut compiler = chifir::compiler::Compiler::new();
+//!
+//! compiler.parse("
+//! f 2 0 3
+//! 8 2 2 3
+//! 2 b 2 f
+//! 1 e 0 0
+//! ");
+//!
+//! assert_eq!(compiler.bytecodes, vec![
+//! 0xf, 0x2, 0x0, 0x3,
+//! 0x8, 0x2, 0x2, 0x3,
+//! 0x2, 0xb, 0x2, 0xf,
+//! 0x1, 0xe, 0x0, 0x0
+//! ]);
+//! ```
+//!
+//! Because raw machine code is hard to read, Chifir programs can include comments.
+//! Comments start with a semicolon and go to the end of the line. Here's the above
+//! program with comments.
+//!
+//! ```
+//! let mut compiler = chifir::compiler::Compiler::new();
+//!
+//! compiler.parse("
+//! f 2 0 3  ; Read key press and store it in M[2]
+//! 8 2 2 3  ; Subtract M[3] from M[2] and store the result in M[2]
+//! 2 b 2 f  ; If M[2] equals 0, then set PC to M[b]
+//! 1 e 0 0  ; Else, set PC to M[e]
+//! ");
+//!
+//! assert_eq!(compiler.bytecodes, vec![
+//! 0xf, 0x2, 0x0, 0x3,
+//! 0x8, 0x2, 0x2, 0x3,
+//! 0x2, 0xb, 0x2, 0xf,
+//! 0x1, 0xe, 0x0, 0x0
+//! ]);
+//! ```
+//!
+//! The term **PC** in the comments refers to the program counter. Chifir starts
+//! with the program counter at 0. The term **M[X]** in the comments refers to the
+//! **X**<sup>th</sup> location in memory. Memory is allocated when it's accessed,
+//! and Chifir programs can use up to 16 GiB of memory.
+//!
+//! Every opcode and operand in a Chifir program is 32 bits. This Chifir program is
+//! written in machine code with hexadecimal values for the opcodes and operands.
+//! Because hex values for opcodes are hard to memorize, Chifir programs can use
+//! three letter abbreviations for the opcodes instead.
+//!
+//! ```
+//! let mut compiler = chifir::compiler::Compiler::new();
+//!
+//! compiler.parse("
+//! key 2 0 3  ; Read key press and store it in M[2]
+//! sub 2 2 3  ; Subtract M[3] from M[2] and store the result in M[2]
+//! beq b 2 f  ; If M[2] equals 0, then set PC to M[b]
+//! lpc e 0 0  ; Else, set PC to M[e]
+//! ");
+//!
+//! assert_eq!(compiler.bytecodes, vec![
+//! 0xf, 0x2, 0x0, 0x3,
+//! 0x8, 0x2, 0x2, 0x3,
+//! 0x2, 0xb, 0x2, 0xf,
+//! 0x1, 0xe, 0x0, 0x0
+//! ]);
+//! ```
+
 use std::vec::Vec;
 use std::string::String;
 use std::collections::HashMap;
