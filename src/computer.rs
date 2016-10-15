@@ -25,7 +25,28 @@ impl Computer<Cursor<Vec<u8>>, Cursor<Vec<u8>>> {
 }
 
 impl<W: Write, R: Read> Computer<W, R> {
-    pub fn loc(&self) -> u32 {
+
+    /// Returns the current location of the program counter.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use chifir::computer::Computer;
+    ///
+    /// let program = vec![
+    ///     0xd, 0x0, 0x0, 0x0,  // drw
+    ///     0x1, 0x6, 0x0, 0x0,  // lpc /2
+    /// ];
+    ///
+    /// let mut computer = Computer { memory: program, ..Computer::new() };
+    ///
+    /// assert_eq!(computer.position(), 0);
+    ///
+    /// computer.step();
+    ///
+    /// assert_eq!(computer.position(), 4);
+    /// ```
+    pub fn position(&self) -> u32 {
         self.counter
     }
 
@@ -286,14 +307,14 @@ mod tests {
 
         // Read initial memory and program counter.
         let memory = m.dump().to_vec();
-        let counter = m.loc();
+        let counter = m.position();
 
         // Step the program twice. If nothing changes, we're in a loop.
         m.step();
-        assert_eq!(counter, m.loc());
+        assert_eq!(counter, m.position());
         assert_eq!(&memory, m.dump());
         m.step();
-        assert_eq!(counter, m.loc());
+        assert_eq!(counter, m.position());
         assert_eq!(&memory, m.dump());
     }
 
@@ -302,9 +323,9 @@ mod tests {
         // Halt execution
         let mut m = Computer { memory: vec![0], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
     }
 
     #[test]
@@ -312,9 +333,9 @@ mod tests {
         // PC <- M[A]
         let mut m = Computer { memory: vec![1, 4, 0, 0, 2], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
-        assert_eq!(2, m.loc());
+        assert_eq!(2, m.position());
     }
 
     #[test]
@@ -322,9 +343,9 @@ mod tests {
         // If M[B] = 0, then PC <- M[A]
         let mut m = Computer { memory: vec![2, 4, 5, 0, 2, 0], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
-        assert_eq!(2, m.loc());
+        assert_eq!(2, m.position());
     }
 
     #[test]
@@ -332,9 +353,9 @@ mod tests {
         // If M[B] = 0, then PC <- M[A]
         let mut m = Computer { memory: vec![2, 4, 5, 0, 2, 1], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -342,10 +363,10 @@ mod tests {
         // M[A] <- PC
         let mut m = Computer { memory: vec![3, 4, 0, 0, 1], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![3, 4, 0, 0, 0], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -353,10 +374,10 @@ mod tests {
         // M[A] <- M[B]
         let mut m = Computer { memory: vec![4, 4, 5, 0, 6, 7], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![4, 4, 5, 0, 7, 7], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -364,10 +385,10 @@ mod tests {
         // M[A] <- M[M[B]]
         let mut m = Computer { memory: vec![5, 4, 5, 0, 6, 7, 0, 8], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![5, 4, 5, 0, 8, 7, 0, 8], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -375,10 +396,10 @@ mod tests {
         // M[M[B]] <- M[A]
         let mut m = Computer { memory: vec![6, 4, 5, 0, 8, 6, 7], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![6, 4, 5, 0, 8, 6, 8], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -386,10 +407,10 @@ mod tests {
         // M[A] <- M[B] + M[C]
         let mut m = Computer { memory: vec![7, 4, 5, 6, 0, 11, 2], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![7, 4, 5, 6, 13, 11, 2], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -398,10 +419,10 @@ mod tests {
         let mut m =
             Computer { memory: vec![7, 4, 5, 6, 1, u32::max_value(), 1], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![7, 4, 5, 6, 0, u32::max_value(), 1], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -409,10 +430,10 @@ mod tests {
         // M[A] <- M[B] - M[C]
         let mut m = Computer { memory: vec![8, 4, 5, 6, 0, 11, 2], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![8, 4, 5, 6, 9, 11, 2], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -420,10 +441,10 @@ mod tests {
         // M[A] <- M[B] - M[C]
         let mut m = Computer { memory: vec![8, 4, 5, 6, 1, 2, 11], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![8, 4, 5, 6, 4294967287, 2, 11], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -431,10 +452,10 @@ mod tests {
         // M[A] <- M[B] * M[C]
         let mut m = Computer { memory: vec![9, 4, 5, 6, 0, 11, 2], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![9, 4, 5, 6, 22, 11, 2], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -443,10 +464,10 @@ mod tests {
         let mut m =
             Computer { memory: vec![9, 4, 5, 6, 0, u32::max_value(), 2], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![9, 4, 5, 6, 4294967294, u32::max_value(), 2], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -454,10 +475,10 @@ mod tests {
         // M[A] <- M[B] / M[C]
         let mut m = Computer { memory: vec![10, 4, 5, 6, 0, 11, 2], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![10, 4, 5, 6, 5, 11, 2], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -465,10 +486,10 @@ mod tests {
         // M[A] <- M[B] / M[C]
         let mut m = Computer { memory: vec![10, 4, 5, 6, 1, 11, 0], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![10, 4, 5, 6, 0, 11, 0], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -476,10 +497,10 @@ mod tests {
         // M[A] <- M[B] % M[C]
         let mut m = Computer { memory: vec![11, 4, 5, 6, 0, 11, 2], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![11, 4, 5, 6, 1, 11, 2], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -487,10 +508,10 @@ mod tests {
         // M[A] <- M[B] % M[C]
         let mut m = Computer { memory: vec![11, 4, 5, 6, 1, 11, 0], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![11, 4, 5, 6, 0, 11, 0], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -498,10 +519,10 @@ mod tests {
         // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
         let mut m = Computer { memory: vec![12, 4, 5, 6, 2, 8, 9], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![12, 4, 5, 6, 1, 8, 9], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -509,10 +530,10 @@ mod tests {
         // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
         let mut m = Computer { memory: vec![12, 4, 5, 6, 2, 9, 8], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![12, 4, 5, 6, 0, 9, 8], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -521,10 +542,10 @@ mod tests {
         let mut m =
             Computer { memory: vec![13, 4, 5, 6, 0, 0xfffffffe, 0xfffffffd], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
         assert_eq!(&vec![13, 4, 5, 6, 0x3, 0xfffffffe, 0xfffffffd], m.dump());
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
@@ -533,9 +554,9 @@ mod tests {
         let mut m = Computer { memory: vec![14, 0, 0, 0], ..Computer::new() };
 
         // Move the program counter after rendering.
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
 
         let buffer = m.output.get_ref();
 
@@ -565,9 +586,9 @@ mod tests {
         };
 
         // Don't the program counter if reading failed.
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
     }
 
     #[test]
@@ -586,9 +607,9 @@ mod tests {
         };
 
         // Move the program counter after reading.
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
 
         // Only save the last key pressed.
         assert_eq!(&vec![15, 32, 0, 0], m.dump());
@@ -599,9 +620,9 @@ mod tests {
         // Skip this instruction
         let mut m = Computer { memory: vec![16], ..Computer::new() };
 
-        assert_eq!(0, m.loc());
+        assert_eq!(0, m.position());
         m.step();
-        assert_eq!(4, m.loc());
+        assert_eq!(4, m.position());
     }
 
     #[test]
