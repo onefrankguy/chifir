@@ -4,7 +4,11 @@
 //! when <kbd>Ctrl</kbd> + <kbd>C</kbd> is pressed.
 //!
 //! ```
-//! let mut compiler = chifir::compiler::Compiler::new();
+//! use std::io::Write;
+//! use chifir::compiler::Compiler;
+//! use chifir::computer::Computer;
+//!
+//! let mut compiler = Compiler::new();
 //!
 //! compiler.parse("
 //! f 2 0 3
@@ -13,12 +17,51 @@
 //! 1 e 0 0
 //! ");
 //!
-//! assert_eq!(compiler.bytecodes, vec![
-//! 0xf, 0x2, 0x0, 0x3,
-//! 0x8, 0x2, 0x2, 0x3,
-//! 0x2, 0xb, 0x2, 0xf,
-//! 0x1, 0xe, 0x0, 0x0
-//! ]);
+//! let mut computer = Computer {
+//!   memory: compiler.bytecodes,
+//!   ..Computer::new()
+//! };
+//!
+//! // The first instruction will be executed.
+//! assert_eq!(computer.next(), 0xf);
+//!
+//! // Input is empty, so the program won't advance.
+//! computer.step();
+//! assert_eq!(computer.next(), 0xf);
+//!
+//! // Put 0x71 into the input, as if "q" was pressed.
+//! write!(computer.input, "{}", "\x71").unwrap();
+//! computer.input.set_position(0);
+//!
+//! // 0x71 will be read from input.
+//! computer.step();
+//! assert_eq!(computer.next(), 0x8);
+//!
+//! // 0x3 will be subtracted from 0x71.
+//! computer.step();
+//! assert_eq!(computer.next(), 0x2);
+//!
+//! // 0x71 minus 0x3 is 0x6e. 0x6e is not zero so the program continues.
+//! computer.step();
+//! assert_eq!(computer.next(), 0x1);
+//!
+//! // The program returns to the beginning.
+//! computer.step();
+//! assert_eq!(computer.next(), 0xf);
+//!
+//! // Put 0x3 into the input, as if "Ctrl+C" was pressed.
+//! write!(computer.input, "{}", "\x03").unwrap();
+//! computer.input.set_position(0);
+//!
+//! // Run the read, subtract, and check loop again.
+//! computer.step();
+//! computer.step();
+//! computer.step();
+//!
+//! // This time, 0x3 minus 0x3 is 0x0, so the program halts.
+//! assert_eq!(computer.next(), 0x0);
+//! computer.step();
+//! assert_eq!(computer.next(), 0x0);
 //! ```
 //!
 //! # Comments
