@@ -29,12 +29,25 @@ impl Compiler {
     // Transform and operand into a bytecode. Undefined operands, or thoses that
     // fail to parse, are treated as zero. This maintains the concept of all
     // uninitialized memory being zeroed out.
-    fn parse_operand(&self, operand: Option<&str>) -> u32 {
+    fn parse_operand(&self, operand: Option<&str>, opcode_address: u32) -> u32 {
         match operand {
             Some(operand) => {
                 match self.labels.get(operand) {
+                    // Operand is a label with an absolute address
                     Some(address) => *address,
-                    None => u32::from_str_radix(operand, 16).unwrap_or(0),
+
+                    None => {
+                        // Operand is a relative address
+                        if operand.starts_with('/') {
+                            let address = operand.trim_left_matches('/');
+                            let address = u32::from_str_radix(address, 16).unwrap_or(0);
+                            address + opcode_address
+                        }
+                        // Operand is a numeric value
+                        else {
+                            u32::from_str_radix(operand, 16).unwrap_or(0)
+                        }
+                    }
                 }
             }
             None => 0,
@@ -50,6 +63,7 @@ impl Compiler {
                     // Ignore labels
                 }
                 None => {
+                    let opcode_address = self.bytecodes.len() as u32;
                     let mut bytecodes = instruction.split_whitespace();
 
                     // Opcode
@@ -118,17 +132,17 @@ impl Compiler {
 
                     // Operand A
                     let bytecode_a = bytecodes.next();
-                    let operand_a = self.parse_operand(bytecode_a);
+                    let operand_a = self.parse_operand(bytecode_a, opcode_address);
                     self.bytecodes.push(operand_a);
 
                     // Operand B
                     let bytecode_b = bytecodes.next();
-                    let operand_b = self.parse_operand(bytecode_b);
+                    let operand_b = self.parse_operand(bytecode_b, opcode_address);
                     self.bytecodes.push(operand_b);
 
                     // Operand C
                     let bytecode_c = bytecodes.next();
-                    let operand_c = self.parse_operand(bytecode_c);
+                    let operand_c = self.parse_operand(bytecode_c, opcode_address);
                     self.bytecodes.push(operand_c);
                 }
             }
@@ -451,6 +465,15 @@ mod tests {
         compiler.parse("brk f f end\nend:");
 
         assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0xf, 0x4]);
+    }
+
+    #[test]
+    fn it_parses_operands_as_relative_addresses() {
+        let mut compiler = Compiler::new();
+        compiler.parse("nop\nadd /0 /5 /6");
+
+        assert_eq!(compiler.bytecodes,
+                   vec![0x10, 0x0, 0x0, 0x0, 0x7, 0x4, 0x9, 0xa]);
     }
 
     #[test]
