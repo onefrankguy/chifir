@@ -436,7 +436,7 @@ mod tests {
     }
 
     #[test]
-    fn it_parses_operand_A_as_hex() {
+    fn it_parses_operand_a_as_hex() {
         let mut compiler = Compiler::new();
         compiler.parse("brk f");
 
@@ -444,7 +444,7 @@ mod tests {
     }
 
     #[test]
-    fn it_parses_operand_A_as_a_label() {
+    fn it_parses_operand_a_as_a_label() {
         let mut compiler = Compiler::new();
         compiler.parse("brk end\nend:");
 
@@ -452,7 +452,7 @@ mod tests {
     }
 
     #[test]
-    fn it_parses_operand_B_as_hex() {
+    fn it_parses_operand_b_as_hex() {
         let mut compiler = Compiler::new();
         compiler.parse("brk f f");
 
@@ -460,7 +460,7 @@ mod tests {
     }
 
     #[test]
-    fn it_parses_operand_B_as_a_label() {
+    fn it_parses_operand_b_as_a_label() {
         let mut compiler = Compiler::new();
         compiler.parse("brk f end\nend:");
 
@@ -468,7 +468,7 @@ mod tests {
     }
 
     #[test]
-    fn it_parses_operand_C_as_hex() {
+    fn it_parses_operand_c_as_hex() {
         let mut compiler = Compiler::new();
         compiler.parse("brk f f f");
 
@@ -476,7 +476,7 @@ mod tests {
     }
 
     #[test]
-    fn it_parses_operand_C_as_a_label() {
+    fn it_parses_operand_c_as_a_label() {
         let mut compiler = Compiler::new();
         compiler.parse("brk f f end\nend:");
 
