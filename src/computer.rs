@@ -80,7 +80,7 @@ impl<W: Write, R: Read> Computer<W, R> {
     ///
     /// computer.load(vec![1, 2, 3, 4]);
     ///
-    /// assert_eq!(&vec![1, 2, 3, 4], computer.dump());
+    /// assert_eq!([1, 2, 3, 4], computer.dump());
     /// ```
     pub fn load<I: IntoIterator<Item = u32>>(&mut self, iter: I) {
         self.memory.clear();
@@ -98,15 +98,28 @@ impl<W: Write, R: Read> Computer<W, R> {
     ///
     /// computer.load_from_slice(&[1, 2, 3, 4]);
     ///
-    /// assert_eq!(&vec![1, 2, 3, 4], computer.dump());
+    /// assert_eq!([1, 2, 3, 4], computer.dump());
     /// ```
     pub fn load_from_slice(&mut self, slice: &[u32]) {
         self.memory.clear();
         self.memory.extend_from_slice(slice);
     }
 
-    pub fn dump(&self) -> &Vec<u32> {
-        &self.memory
+    /// Extracts a slice containing the contents of memory.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use chifir::computer::Computer;
+    ///
+    /// let mut computer = Computer::new();
+    ///
+    /// computer.load_from_slice(&[1, 2, 3, 4]);
+    ///
+    /// assert_eq!([1, 2, 3, 4], computer.dump());
+    /// ```
+    pub fn dump(&self) -> &[u32] {
+        self.memory.as_slice()
     }
 
     /// Executes the next instruction.
@@ -341,16 +354,17 @@ mod tests {
         let mut m = Computer::new();
 
         // Read initial memory and program counter.
-        let memory = m.dump().to_vec();
+        let mut memory: Vec<u32> = Vec::new();
+        memory.extend(m.dump());
         let counter = m.position();
 
         // Step the program twice. If nothing changes, we're in a loop.
         m.step();
         assert_eq!(counter, m.position());
-        assert_eq!(&memory, m.dump());
+        assert_eq!(memory, m.dump());
         m.step();
         assert_eq!(counter, m.position());
-        assert_eq!(&memory, m.dump());
+        assert_eq!(memory, m.dump());
     }
 
     #[test]
@@ -401,7 +415,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![3, 4, 0, 0, 0], m.dump());
+        assert_eq!([3, 4, 0, 0, 0], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -412,7 +426,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![4, 4, 5, 0, 7, 7], m.dump());
+        assert_eq!([4, 4, 5, 0, 7, 7], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -423,7 +437,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![5, 4, 5, 0, 8, 7, 0, 8], m.dump());
+        assert_eq!([5, 4, 5, 0, 8, 7, 0, 8], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -434,7 +448,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![6, 4, 5, 0, 8, 6, 8], m.dump());
+        assert_eq!([6, 4, 5, 0, 8, 6, 8], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -445,7 +459,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![7, 4, 5, 6, 13, 11, 2], m.dump());
+        assert_eq!([7, 4, 5, 6, 13, 11, 2], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -457,7 +471,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![7, 4, 5, 6, 0, u32::max_value(), 1], m.dump());
+        assert_eq!([7, 4, 5, 6, 0, u32::max_value(), 1], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -468,7 +482,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![8, 4, 5, 6, 9, 11, 2], m.dump());
+        assert_eq!([8, 4, 5, 6, 9, 11, 2], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -479,7 +493,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![8, 4, 5, 6, 4294967287, 2, 11], m.dump());
+        assert_eq!([8, 4, 5, 6, 4294967287, 2, 11], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -490,7 +504,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![9, 4, 5, 6, 22, 11, 2], m.dump());
+        assert_eq!([9, 4, 5, 6, 22, 11, 2], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -502,7 +516,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![9, 4, 5, 6, 4294967294, u32::max_value(), 2], m.dump());
+        assert_eq!([9, 4, 5, 6, 4294967294, u32::max_value(), 2], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -513,7 +527,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![10, 4, 5, 6, 5, 11, 2], m.dump());
+        assert_eq!([10, 4, 5, 6, 5, 11, 2], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -524,7 +538,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![10, 4, 5, 6, 0, 11, 0], m.dump());
+        assert_eq!([10, 4, 5, 6, 0, 11, 0], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -535,7 +549,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![11, 4, 5, 6, 1, 11, 2], m.dump());
+        assert_eq!([11, 4, 5, 6, 1, 11, 2], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -546,7 +560,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![11, 4, 5, 6, 0, 11, 0], m.dump());
+        assert_eq!([11, 4, 5, 6, 0, 11, 0], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -557,7 +571,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![12, 4, 5, 6, 1, 8, 9], m.dump());
+        assert_eq!([12, 4, 5, 6, 1, 8, 9], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -568,7 +582,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![12, 4, 5, 6, 0, 9, 8], m.dump());
+        assert_eq!([12, 4, 5, 6, 0, 9, 8], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -580,7 +594,7 @@ mod tests {
 
         assert_eq!(0, m.position());
         m.step();
-        assert_eq!(&vec![13, 4, 5, 6, 0x3, 0xfffffffe, 0xfffffffd], m.dump());
+        assert_eq!([13, 4, 5, 6, 0x3, 0xfffffffe, 0xfffffffd], m.dump());
         assert_eq!(4, m.position());
     }
 
@@ -648,7 +662,7 @@ mod tests {
         assert_eq!(4, m.position());
 
         // Only save the last key pressed.
-        assert_eq!(&vec![15, 32, 0, 0], m.dump());
+        assert_eq!([15, 32, 0, 0], m.dump());
     }
 
     #[test]
@@ -670,6 +684,6 @@ mod tests {
         };
 
         m.step();
-        assert_eq!(&vec![0, 0, 0, 0, 0, 0, 0], m.dump());
+        assert_eq!([0, 0, 0, 0, 0, 0, 0], m.dump());
     }
 }
