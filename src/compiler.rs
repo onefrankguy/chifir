@@ -202,4 +202,22 @@ mod tests {
         assert_eq!(compiler.lines.len(), 1);
         assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
     }
+
+    #[test]
+    fn it_trims_spaces_from_instructions() {
+        let mut compiler = Compiler::new();
+        compiler.parse(" 0 0 0 0 ");
+
+        assert_eq!(compiler.lines.len(), 1);
+        assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
+    }
+
+    #[test]
+    fn it_trims_tabs_from_instructions() {
+        let mut compiler = Compiler::new();
+        compiler.parse("\t0 0 0 0\t");
+
+        assert_eq!(compiler.lines.len(), 1);
+        assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
+    }
 }
