@@ -1,7 +1,7 @@
 use termion;
 
 use super::sixel;
-use std::io::{Write, Read, Cursor};
+use std::io::{Write, Read};
 use std::vec::Vec;
 
 pub struct Computer<W: Write, R: Read> {
@@ -9,19 +9,6 @@ pub struct Computer<W: Write, R: Read> {
     pub counter: u32,
     pub output: W,
     pub input: R,
-}
-
-impl Computer<Cursor<Vec<u8>>, Cursor<Vec<u8>>> {
-    pub fn new() -> Self {
-        Computer {
-            // Default to a valid program in memory.
-            // This one is an infinite loop.
-            memory: vec![1, 2, 0, 0],
-            counter: 0,
-            output: Cursor::new(Vec::new()),
-            input: Cursor::new(Vec::new()),
-        }
-    }
 }
 
 impl<W: Write, R: Read> Computer<W, R> {
@@ -35,17 +22,15 @@ impl<W: Write, R: Read> Computer<W, R> {
     /// ```
     /// use chifir::computer::Computer;
     /// use std::io::Cursor;
-    /// use std::vec::Vec;
     ///
     /// let input = Cursor::new(Vec::new());
     /// let output = Cursor::new(Vec::new());
-    ///
-    /// let computer = Computer::with_io(input, output);
+    /// let computer = Computer::new(input, output);
     ///
     /// assert_eq!([0; 0], computer.dump());
     /// assert_eq!(0, computer.position());
     /// ```
-    pub fn with_io(input: R, output: W) -> Self {
+    pub fn new(input: R, output: W) -> Self {
         Computer {
             memory: Vec::new(),
             counter: 0,
@@ -60,13 +45,16 @@ impl<W: Write, R: Read> Computer<W, R> {
     ///
     /// ```
     /// use chifir::computer::Computer;
+    /// use std::io::Cursor;
     ///
-    /// let program = vec![
+    /// let input = Cursor::new(Vec::new());
+    /// let output = Cursor::new(Vec::new());
+    /// let mut computer = Computer::new(input, output);
+    ///
+    /// computer.load(vec![
     ///     0xd, 0x0, 0x0, 0x0,  // drw
     ///     0x1, 0x6, 0x0, 0x0,  // lpc /2
-    /// ];
-    ///
-    /// let mut computer = Computer { memory: program, ..Computer::new() };
+    /// ]);
     ///
     /// assert_eq!(computer.position(), 0);
     ///
@@ -84,12 +72,15 @@ impl<W: Write, R: Read> Computer<W, R> {
     ///
     /// ```
     /// use chifir::computer::Computer;
+    /// use std::io::Cursor;
     ///
-    /// let program = vec![
+    /// let input = Cursor::new(Vec::new());
+    /// let output = Cursor::new(Vec::new());
+    /// let mut computer = Computer::new(input, output);
+    ///
+    /// computer.load(vec![
     ///     0x1, 0x2, 0x0, 0x0,  // lpc /2
-    /// ];
-    ///
-    /// let mut computer = Computer { memory: program, ..Computer::new() };
+    /// ]);
     ///
     /// assert_eq!(computer.next(), 0x1);
     /// ```
@@ -104,14 +95,20 @@ impl<W: Write, R: Read> Computer<W, R> {
     ///
     /// ```
     /// use chifir::computer::Computer;
+    /// use std::io::Cursor;
     ///
-    /// let mut computer = Computer::new();
+    /// let input = Cursor::new(Vec::new());
+    /// let output = Cursor::new(Vec::new());
+    /// let mut computer = Computer::new(input, output);
     ///
-    /// computer.load(vec![1, 2, 3, 4]);
+    /// computer.load(vec![
+    ///     1, 2, 3, 4
+    /// ]);
     ///
     /// assert_eq!([1, 2, 3, 4], computer.dump());
     /// ```
     pub fn load<I: IntoIterator<Item = u32>>(&mut self, iter: I) {
+        self.counter = 0;
         self.memory.clear();
         self.memory.extend(iter);
     }
@@ -122,14 +119,20 @@ impl<W: Write, R: Read> Computer<W, R> {
     ///
     /// ```
     /// use chifir::computer::Computer;
+    /// use std::io::Cursor;
     ///
-    /// let mut computer = Computer::new();
+    /// let input = Cursor::new(Vec::new());
+    /// let output = Cursor::new(Vec::new());
+    /// let mut computer = Computer::new(input, output);
     ///
-    /// computer.load_from_slice(&[1, 2, 3, 4]);
+    /// computer.load_from_slice(&[
+    ///     1, 2, 3, 4
+    /// ]);
     ///
     /// assert_eq!([1, 2, 3, 4], computer.dump());
     /// ```
     pub fn load_from_slice(&mut self, slice: &[u32]) {
+        self.counter = 0;
         self.memory.clear();
         self.memory.extend_from_slice(slice);
     }
@@ -140,10 +143,15 @@ impl<W: Write, R: Read> Computer<W, R> {
     ///
     /// ```
     /// use chifir::computer::Computer;
+    /// use std::io::Cursor;
     ///
-    /// let mut computer = Computer::new();
+    /// let input = Cursor::new(Vec::new());
+    /// let output = Cursor::new(Vec::new());
+    /// let mut computer = Computer::new(input, output);
     ///
-    /// computer.load_from_slice(&[1, 2, 3, 4]);
+    /// computer.load_from_slice(&[
+    ///     1, 2, 3, 4
+    /// ]);
     ///
     /// assert_eq!([1, 2, 3, 4], computer.dump());
     /// ```
@@ -157,14 +165,17 @@ impl<W: Write, R: Read> Computer<W, R> {
     ///
     /// ```
     /// use chifir::computer::Computer;
+    /// use std::io::Cursor;
     ///
-    /// let program = vec![
+    /// let input = Cursor::new(Vec::new());
+    /// let output = Cursor::new(Vec::new());
+    /// let mut computer = Computer::new(input, output);
+    ///
+    /// computer.load(vec![
     ///     0x1, 0x3, 0x0, 0x8,  // lpc /3 0 8
     ///     0x0, 0x0, 0x0, 0x0,  // brk
     ///     0x2, 0xa, 0x4, 0x0,  // beq /2 4
-    /// ];
-    ///
-    /// let mut computer = Computer { memory: program, ..Computer::new() };
+    /// ]);
     ///
     /// assert_eq!(computer.next(), 0x1);
     ///
@@ -377,30 +388,20 @@ impl<W: Write, R: Read> Computer<W, R> {
 #[cfg(test)]
 mod tests {
     use super::Computer;
+    use std::io::Cursor;
 
-    #[test]
-    fn it_defaults_to_an_infinite_loop() {
-        let mut m = Computer::new();
-
-        // Read initial memory and program counter.
-        let mut memory: Vec<u32> = Vec::new();
-        memory.extend(m.dump());
-        let counter = m.position();
-
-        // Step the program twice. If nothing changes, we're in a loop.
-        m.step();
-        assert_eq!(counter, m.position());
-        assert_eq!(memory, m.dump());
-        m.step();
-        assert_eq!(counter, m.position());
-        assert_eq!(memory, m.dump());
+    fn computer_with_program(slice: &[u32]) -> Computer<Cursor<Vec<u8>>, Cursor<Vec<u8>>> {
+        let input = Cursor::new(Vec::new());
+        let output = Cursor::new(Vec::new());
+        let mut computer = Computer::new(input, output);
+        computer.load_from_slice(slice);
+        computer
     }
 
     #[test]
     fn it_runs_opcode_0() {
         // Halt execution
-        let mut m = Computer::new();
-        m.load(vec![0]);
+        let mut m = computer_with_program(&[0]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -410,7 +411,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_1() {
         // PC <- M[A]
-        let mut m = Computer { memory: vec![1, 4, 0, 0, 2], ..Computer::new() };
+        let mut m = computer_with_program(&[1, 4, 0, 0, 2]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -420,7 +421,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_2_then_branch() {
         // If M[B] = 0, then PC <- M[A]
-        let mut m = Computer { memory: vec![2, 4, 5, 0, 2, 0], ..Computer::new() };
+        let mut m = computer_with_program(&[2, 4, 5, 0, 2, 0]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -430,7 +431,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_2_else_branch() {
         // If M[B] = 0, then PC <- M[A]
-        let mut m = Computer { memory: vec![2, 4, 5, 0, 2, 1], ..Computer::new() };
+        let mut m = computer_with_program(&[2, 4, 5, 0, 2, 1]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -440,7 +441,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_3() {
         // M[A] <- PC
-        let mut m = Computer { memory: vec![3, 4, 0, 0, 1], ..Computer::new() };
+        let mut m = computer_with_program(&[3, 4, 0, 0, 1]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -451,7 +452,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_4() {
         // M[A] <- M[B]
-        let mut m = Computer { memory: vec![4, 4, 5, 0, 6, 7], ..Computer::new() };
+        let mut m = computer_with_program(&[4, 4, 5, 0, 6, 7]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -462,7 +463,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_5() {
         // M[A] <- M[M[B]]
-        let mut m = Computer { memory: vec![5, 4, 5, 0, 6, 7, 0, 8], ..Computer::new() };
+        let mut m = computer_with_program(&[5, 4, 5, 0, 6, 7, 0, 8]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -473,7 +474,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_6() {
         // M[M[B]] <- M[A]
-        let mut m = Computer { memory: vec![6, 4, 5, 0, 8, 6, 7], ..Computer::new() };
+        let mut m = computer_with_program(&[6, 4, 5, 0, 8, 6, 7]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -484,7 +485,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_7() {
         // M[A] <- M[B] + M[C]
-        let mut m = Computer { memory: vec![7, 4, 5, 6, 0, 11, 2], ..Computer::new() };
+        let mut m = computer_with_program(&[7, 4, 5, 6, 0, 11, 2]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -495,8 +496,7 @@ mod tests {
     #[test]
     fn it_prevents_overflow_when_running_opcode_7() {
         // M[A] <- M[B] + M[C]
-        let mut m =
-            Computer { memory: vec![7, 4, 5, 6, 1, u32::max_value(), 1], ..Computer::new() };
+        let mut m = computer_with_program(&[7, 4, 5, 6, 1, u32::max_value(), 1]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -507,7 +507,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_8() {
         // M[A] <- M[B] - M[C]
-        let mut m = Computer { memory: vec![8, 4, 5, 6, 0, 11, 2], ..Computer::new() };
+        let mut m = computer_with_program(&[8, 4, 5, 6, 0, 11, 2]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -518,7 +518,7 @@ mod tests {
     #[test]
     fn it_prevents_overflow_while_runing_opcode_8() {
         // M[A] <- M[B] - M[C]
-        let mut m = Computer { memory: vec![8, 4, 5, 6, 1, 2, 11], ..Computer::new() };
+        let mut m = computer_with_program(&[8, 4, 5, 6, 1, 2, 11]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -529,7 +529,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_9() {
         // M[A] <- M[B] * M[C]
-        let mut m = Computer { memory: vec![9, 4, 5, 6, 0, 11, 2], ..Computer::new() };
+        let mut m = computer_with_program(&[9, 4, 5, 6, 0, 11, 2]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -540,8 +540,7 @@ mod tests {
     #[test]
     fn it_prevents_overflow_when_running_opcode_9() {
         // M[A] <- M[B] * M[C]
-        let mut m =
-            Computer { memory: vec![9, 4, 5, 6, 0, u32::max_value(), 2], ..Computer::new() };
+        let mut m = computer_with_program(&[9, 4, 5, 6, 0, u32::max_value(), 2]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -552,7 +551,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_10() {
         // M[A] <- M[B] / M[C]
-        let mut m = Computer { memory: vec![10, 4, 5, 6, 0, 11, 2], ..Computer::new() };
+        let mut m = computer_with_program(&[10, 4, 5, 6, 0, 11, 2]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -563,7 +562,7 @@ mod tests {
     #[test]
     fn it_prevents_divide_by_zero_errors_when_running_opcode_10() {
         // M[A] <- M[B] / M[C]
-        let mut m = Computer { memory: vec![10, 4, 5, 6, 1, 11, 0], ..Computer::new() };
+        let mut m = computer_with_program(&[10, 4, 5, 6, 1, 11, 0]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -574,7 +573,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_11() {
         // M[A] <- M[B] % M[C]
-        let mut m = Computer { memory: vec![11, 4, 5, 6, 0, 11, 2], ..Computer::new() };
+        let mut m = computer_with_program(&[11, 4, 5, 6, 0, 11, 2]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -585,7 +584,7 @@ mod tests {
     #[test]
     fn it_prevents_divide_by_zero_errors_when_running_opcode_11() {
         // M[A] <- M[B] % M[C]
-        let mut m = Computer { memory: vec![11, 4, 5, 6, 1, 11, 0], ..Computer::new() };
+        let mut m = computer_with_program(&[11, 4, 5, 6, 1, 11, 0]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -596,7 +595,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_12_then_branch() {
         // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
-        let mut m = Computer { memory: vec![12, 4, 5, 6, 2, 8, 9], ..Computer::new() };
+        let mut m = computer_with_program(&[12, 4, 5, 6, 2, 8, 9]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -607,7 +606,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_12_else_branch() {
         // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
-        let mut m = Computer { memory: vec![12, 4, 5, 6, 2, 9, 8], ..Computer::new() };
+        let mut m = computer_with_program(&[12, 4, 5, 6, 2, 9, 8]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -618,8 +617,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_13() {
         // M[A] <- NOT(M[B] AND M[C])
-        let mut m =
-            Computer { memory: vec![13, 4, 5, 6, 0, 0xfffffffe, 0xfffffffd], ..Computer::new() };
+        let mut m = computer_with_program(&[13, 4, 5, 6, 0, 0xfffffffe, 0xfffffffd]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -630,7 +628,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_14() {
         // Refresh the screen
-        let mut m = Computer { memory: vec![14, 0, 0, 0], ..Computer::new() };
+        let mut m = computer_with_program(&[14, 0, 0, 0]);
 
         // Move the program counter after rendering.
         assert_eq!(0, m.position());
@@ -652,19 +650,9 @@ mod tests {
     #[test]
     fn it_runs_opcode_15_blocking() {
         // Get one character from the keyboard and store it into M[A]
-        use std::io::Cursor;
+        let mut m = computer_with_program(&[15, 1, 0, 0]);
 
-        let output = Cursor::new(Vec::new());
-        let input = Cursor::new(Vec::new());
-
-        let mut m = Computer {
-            memory: vec![15, 1, 0, 0],
-            counter: 0,
-            output: output,
-            input: input,
-        };
-
-        // Don't the program counter if reading failed.
+        // Don't move the program counter if reading failed.
         assert_eq!(0, m.position());
         m.step();
         assert_eq!(0, m.position());
@@ -673,17 +661,11 @@ mod tests {
     #[test]
     fn it_runs_opcode_15_non_blocking() {
         // Get one character from the keyboard and store it into M[A]
-        use std::io::Cursor;
-
         let output = Cursor::new(Vec::new());
         let input = Cursor::new(vec![8, 10, 13, 32]);
 
-        let mut m = Computer {
-            memory: vec![15, 1, 0, 0],
-            counter: 0,
-            output: output,
-            input: input,
-        };
+        let mut m = Computer::new(input, output);
+        m.load_from_slice(&[15, 1, 0, 0]);
 
         // Move the program counter after reading.
         assert_eq!(0, m.position());
@@ -697,7 +679,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_16() {
         // Skip this instruction
-        let mut m = Computer { memory: vec![16], ..Computer::new() };
+        let mut m = computer_with_program(&[16, 0, 0, 0]);
 
         assert_eq!(0, m.position());
         m.step();
@@ -706,13 +688,10 @@ mod tests {
 
     #[test]
     fn it_provides_safe_memory_access_when_stepping() {
-        let mut m = Computer {
-            memory: vec![0],
-            counter: 3,
-            ..Computer::new()
-        };
+        let mut m = computer_with_program(&[1, 2, 4, 0]);
 
         m.step();
-        assert_eq!([0, 0, 0, 0, 0, 0, 0], m.dump());
+        m.step();
+        assert_eq!([1, 2, 4, 0, 0, 0, 0, 0], m.dump());
     }
 }

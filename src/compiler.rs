@@ -4,7 +4,7 @@
 //! when <kbd>Ctrl</kbd> + <kbd>C</kbd> is pressed.
 //!
 //! ```
-//! use std::io::Write;
+//! use std::io::{Write, Cursor};
 //! use chifir::compiler::Compiler;
 //! use chifir::computer::Computer;
 //!
@@ -17,10 +17,10 @@
 //! 1 e 0 0
 //! ");
 //!
-//! let mut computer = Computer {
-//!   memory: compiler.bytecodes,
-//!   ..Computer::new()
-//! };
+//! let input = Cursor::new(Vec::new());
+//! let output = Cursor::new(Vec::new());
+//! let mut computer = Computer::new(input, output);
+//! computer.load(compiler.bytecodes);
 //!
 //! // The first instruction will be executed.
 //! assert_eq!(computer.next(), 0xf);

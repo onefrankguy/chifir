@@ -26,7 +26,7 @@ fn main() {
     1 f 0 0  ; 12 - Else PC <- 0
     ");
 
-    let mut vm = chifir::computer::Computer::with_io(stdin, stdout);
+    let mut vm = chifir::computer::Computer::new(stdin, stdout);
     vm.load(compiler.bytecodes);
 
     while vm.next() != 0 {
