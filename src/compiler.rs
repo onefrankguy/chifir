@@ -26,6 +26,21 @@ impl Compiler {
         self.compile_bytecodes();
     }
 
+    // Transform and operand into a bytecode. Undefined operands, or thoses that
+    // fail to parse, are treated as zero. This maintains the concept of all
+    // uninitialized memory being zeroed out.
+    fn parse_operand(&self, operand: Option<&str>) -> u32 {
+        match operand {
+            Some(operand) => {
+                match self.labels.get(operand) {
+                    Some(address) => *address,
+                    None => u32::from_str_radix(operand, 16).unwrap_or(0),
+                }
+            }
+            None => 0,
+        }
+    }
+
     fn compile_bytecodes(&mut self) {
         let mut instructions = self.instructions.iter();
 
@@ -102,64 +117,19 @@ impl Compiler {
                     }
 
                     // Operand A
-                    match bytecodes.next() {
-                        Some(operand) => {
-                            match self.labels.get(operand) {
-                                None => {
-                                    match u32::from_str_radix(operand, 16) {
-                                        Ok(bytecode) => {
-                                            self.bytecodes.push(bytecode);
-                                        }
-                                        _ => {}
-                                    }
-                                }
-                                Some(address) => {
-                                    self.bytecodes.push(*address);
-                                }
-                            }
-                        }
-                        None => {}
-                    }
+                    let bytecode_a = bytecodes.next();
+                    let operand_a = self.parse_operand(bytecode_a);
+                    self.bytecodes.push(operand_a);
 
                     // Operand B
-                    match bytecodes.next() {
-                        Some(operand) => {
-                            match self.labels.get(operand) {
-                                None => {
-                                    match u32::from_str_radix(operand, 16) {
-                                        Ok(bytecode) => {
-                                            self.bytecodes.push(bytecode);
-                                        }
-                                        _ => {}
-                                    }
-                                }
-                                Some(address) => {
-                                    self.bytecodes.push(*address);
-                                }
-                            }
-                        }
-                        None => {}
-                    }
+                    let bytecode_b = bytecodes.next();
+                    let operand_b = self.parse_operand(bytecode_b);
+                    self.bytecodes.push(operand_b);
 
                     // Operand C
-                    match bytecodes.next() {
-                        Some(operand) => {
-                            match self.labels.get(operand) {
-                                None => {
-                                    match u32::from_str_radix(operand, 16) {
-                                        Ok(bytecode) => {
-                                            self.bytecodes.push(bytecode);
-                                        }
-                                        _ => {}
-                                    }
-                                }
-                                Some(address) => {
-                                    self.bytecodes.push(*address);
-                                }
-                            }
-                        }
-                        None => {}
-                    }
+                    let bytecode_c = bytecodes.next();
+                    let operand_c = self.parse_operand(bytecode_c);
+                    self.bytecodes.push(operand_c);
                 }
             }
         }
@@ -424,7 +394,7 @@ mod tests {
         let mut compiler = Compiler::new();
         compiler.parse("0");
 
-        assert_eq!(compiler.bytecodes, vec![0x0]);
+        assert_eq!(compiler.bytecodes, vec![0x0, 0x0, 0x0, 0x0]);
     }
 
     #[test]
@@ -432,7 +402,7 @@ mod tests {
         let mut compiler = Compiler::new();
         compiler.parse("brk");
 
-        assert_eq!(compiler.bytecodes, vec![0x0]);
+        assert_eq!(compiler.bytecodes, vec![0x0, 0x0, 0x0, 0x0]);
     }
 
     #[test]
@@ -440,7 +410,7 @@ mod tests {
         let mut compiler = Compiler::new();
         compiler.parse("brk f");
 
-        assert_eq!(compiler.bytecodes, vec![0x0, 0xf]);
+        assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0x0, 0x0]);
     }
 
     #[test]
@@ -448,7 +418,7 @@ mod tests {
         let mut compiler = Compiler::new();
         compiler.parse("brk end\nend:");
 
-        assert_eq!(compiler.bytecodes, vec![0x0, 0x4]);
+        assert_eq!(compiler.bytecodes, vec![0x0, 0x4, 0x0, 0x0]);
     }
 
     #[test]
@@ -456,7 +426,7 @@ mod tests {
         let mut compiler = Compiler::new();
         compiler.parse("brk f f");
 
-        assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0xf]);
+        assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0xf, 0x0]);
     }
 
     #[test]
@@ -464,7 +434,7 @@ mod tests {
         let mut compiler = Compiler::new();
         compiler.parse("brk f end\nend:");
 
-        assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0x4]);
+        assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0x4, 0x0]);
     }
 
     #[test]
