@@ -29,6 +29,21 @@ impl<W: Write, R: Read> Computer<W, R> {
         self.counter
     }
 
+    /// Returns the next opcode that will be executed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use chifir::computer::Computer;
+    ///
+    /// let program = vec![
+    ///     0x1, 0x2, 0x0, 0x0,  // lpc /2
+    /// ];
+    ///
+    /// let mut computer = Computer { memory: program, ..Computer::new() };
+    ///
+    /// assert_eq!(computer.next(), 0x1);
+    /// ```
     pub fn next(&mut self) -> u32 {
         let counter = self.counter;
         self.read(counter)
@@ -38,6 +53,28 @@ impl<W: Write, R: Read> Computer<W, R> {
         &self.memory
     }
 
+    /// Executes the next instruction.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use chifir::computer::Computer;
+    ///
+    /// let program = vec![
+    ///     0x1, 0x3, 0x0, 0x8,  // lpc /3 0 8
+    ///     0x0, 0x0, 0x0, 0x0,  // brk
+    ///     0x2, 0xa, 0x4, 0x0,  // beq /2 4
+    /// ];
+    ///
+    /// let mut computer = Computer { memory: program, ..Computer::new() };
+    ///
+    /// assert_eq!(computer.next(), 0x1);
+    ///
+    /// computer.step();
+    /// computer.step();
+    ///
+    /// assert_eq!(computer.next(), 0x0);
+    /// ```
     pub fn step(&mut self) {
         let counter = self.counter;
         let opcode = self.read(counter);
