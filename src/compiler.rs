@@ -72,6 +72,46 @@ impl Compiler {
                         }
                         None => {}
                     }
+
+                    // Operand B
+                    match bytecodes.next() {
+                        Some(operand) => {
+                            match self.labels.get(operand) {
+                                None => {
+                                    match u32::from_str_radix(operand, 16) {
+                                        Ok(bytecode) => {
+                                            self.bytecodes.push(bytecode);
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                                Some(address) => {
+                                    self.bytecodes.push(*address);
+                                }
+                            }
+                        }
+                        None => {}
+                    }
+
+                    // Operand C
+                    match bytecodes.next() {
+                        Some(operand) => {
+                            match self.labels.get(operand) {
+                                None => {
+                                    match u32::from_str_radix(operand, 16) {
+                                        Ok(bytecode) => {
+                                            self.bytecodes.push(bytecode);
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                                Some(address) => {
+                                    self.bytecodes.push(*address);
+                                }
+                            }
+                        }
+                        None => {}
+                    }
                 }
             }
         }
@@ -361,5 +401,37 @@ mod tests {
         compiler.parse("brk end\nend:");
 
         assert_eq!(compiler.bytecodes, vec![0x0, 0x4]);
+    }
+
+    #[test]
+    fn it_parses_operand_B_as_hex() {
+        let mut compiler = Compiler::new();
+        compiler.parse("brk f f");
+
+        assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0xf]);
+    }
+
+    #[test]
+    fn it_parses_operand_B_as_a_label() {
+        let mut compiler = Compiler::new();
+        compiler.parse("brk f end\nend:");
+
+        assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0x4]);
+    }
+
+    #[test]
+    fn it_parses_operand_C_as_hex() {
+        let mut compiler = Compiler::new();
+        compiler.parse("brk f f f");
+
+        assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0xf, 0xf]);
+    }
+
+    #[test]
+    fn it_parses_operand_C_as_a_label() {
+        let mut compiler = Compiler::new();
+        compiler.parse("brk f f end\nend:");
+
+        assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0xf, 0x4]);
     }
 }
