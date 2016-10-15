@@ -11,6 +11,10 @@ impl Compiler {
     }
 
     pub fn parse(&mut self, assembly: &str) {
+        self.split_lines(assembly);
+    }
+
+    fn split_lines(&mut self, assembly: &str) {
         let mut line = String::new();
         let mut chars = assembly.chars();
 
