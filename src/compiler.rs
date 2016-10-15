@@ -2,7 +2,7 @@ use std::vec::Vec;
 use std::string::String;
 use std::collections::HashMap;
 
-struct Compiler {
+pub struct Compiler {
     pub lines: Vec<String>,
     pub instructions: Vec<String>,
     pub labels: HashMap<String, u32>,

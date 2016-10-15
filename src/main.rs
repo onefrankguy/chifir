@@ -18,13 +18,16 @@ fn main() {
         .unwrap();
     stdout.flush().unwrap();
 
+    let mut compiler = chifir::compiler::Compiler::new();
+    compiler.parse("
+    f 2 0 3  ; 00 - Read key press and store it in $2
+    8 2 2 3  ; 04 - $2 <- $2 - $3
+    2 b 2 f  ; 08 - If $2 = 0, then PC <- 15
+    1 f 0 0  ; 12 - Else PC <- 0
+    ");
+
     let mut vm = chifir::machine::Machine {
-        memory: vec![
-            0xf, 0x2, 0x0, 0x3, // 00 - Read key press and store it in $2
-            0x8, 0x2, 0x2, 0x3, // 04 - $2 <- $2 - $3
-            0x2, 0xb, 0x2, 0xf, // 08 - If $2 = 0, then PC <- 15
-            0x1, 0xf, 0x0, 0x0, // 12 - Else PC <- 0
-        ],
+        memory: compiler.bytecodes.clone(),
         counter: 0,
         output: stdout,
         input: stdin,

@@ -2,4 +2,4 @@ extern crate termion;
 
 pub mod machine;
 mod sixel;
-mod compiler;
+pub mod compiler;
