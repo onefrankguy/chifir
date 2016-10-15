@@ -10,3 +10,8 @@ license = "MIT"
 
 [dependencies]
 termion = "1.0"
+
+[[bin]]
+name = "chifir"
+path = "src/bin/chifir.rs"
+doc = false
