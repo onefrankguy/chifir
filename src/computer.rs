@@ -358,7 +358,8 @@ mod tests {
     #[test]
     fn it_prevents_overflow_when_running_opcode_7() {
         // M[A] <- M[B] + M[C]
-        let mut m = Computer { memory: vec![7, 4, 5, 6, 1, u32::max_value(), 1], ..Computer::new() };
+        let mut m =
+            Computer { memory: vec![7, 4, 5, 6, 1, u32::max_value(), 1], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -402,7 +403,8 @@ mod tests {
     #[test]
     fn it_prevents_overflow_when_running_opcode_9() {
         // M[A] <- M[B] * M[C]
-        let mut m = Computer { memory: vec![9, 4, 5, 6, 0, u32::max_value(), 2], ..Computer::new() };
+        let mut m =
+            Computer { memory: vec![9, 4, 5, 6, 0, u32::max_value(), 2], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
