@@ -68,66 +68,28 @@ impl Compiler {
 
                     // Opcode
                     match bytecodes.next() {
-                        Some("brk") => {
-                            self.bytecodes.push(0);
-                        }
-                        Some("lpc") => {
-                            self.bytecodes.push(1);
-                        }
-                        Some("beq") => {
-                            self.bytecodes.push(2);
-                        }
-                        Some("spc") => {
-                            self.bytecodes.push(3);
-                        }
-                        Some("lea") => {
-                            self.bytecodes.push(4);
-                        }
-                        Some("lra") => {
-                            self.bytecodes.push(5);
-                        }
-                        Some("sra") => {
-                            self.bytecodes.push(6);
-                        }
-                        Some("add") => {
-                            self.bytecodes.push(7);
-                        }
-                        Some("sub") => {
-                            self.bytecodes.push(8);
-                        }
-                        Some("mul") => {
-                            self.bytecodes.push(9);
-                        }
-                        Some("div") => {
-                            self.bytecodes.push(10);
-                        }
-                        Some("mod") => {
-                            self.bytecodes.push(11);
-                        }
-                        Some("cmp") => {
-                            self.bytecodes.push(12);
-                        }
-                        Some("nad") => {
-                            self.bytecodes.push(13);
-                        }
-                        Some("drw") => {
-                            self.bytecodes.push(14);
-                        }
-                        Some("key") => {
-                            self.bytecodes.push(15);
-                        }
-                        Some("nop") => {
-                            self.bytecodes.push(16);
-                        }
+                        Some("brk") => self.bytecodes.push(0),
+                        Some("lpc") => self.bytecodes.push(1),
+                        Some("beq") => self.bytecodes.push(2),
+                        Some("spc") => self.bytecodes.push(3),
+                        Some("lea") => self.bytecodes.push(4),
+                        Some("lra") => self.bytecodes.push(5),
+                        Some("sra") => self.bytecodes.push(6),
+                        Some("add") => self.bytecodes.push(7),
+                        Some("sub") => self.bytecodes.push(8),
+                        Some("mul") => self.bytecodes.push(9),
+                        Some("div") => self.bytecodes.push(10),
+                        Some("mod") => self.bytecodes.push(11),
+                        Some("cmp") => self.bytecodes.push(12),
+                        Some("nad") => self.bytecodes.push(13),
+                        Some("drw") => self.bytecodes.push(14),
+                        Some("key") => self.bytecodes.push(15),
+                        Some("nop") => self.bytecodes.push(16),
                         Some(opcode) => {
-                            match u32::from_str_radix(opcode, 16) {
-                                Ok(bytecode) => {
-                                    self.bytecodes.push(bytecode);
-                                }
-                                _ => {}
-                            }
+                            let bytecode = u32::from_str_radix(opcode, 16).unwrap_or(0);
+                            self.bytecodes.push(bytecode);
                         }
-                        None => {}
+                        None => self.bytecodes.push(0),
                     }
 
                     // Operand A
