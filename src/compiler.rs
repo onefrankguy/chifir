@@ -18,7 +18,8 @@ impl Compiler {
             match c {
                 // Line Feed
                 // Vertical Tab
-                '\u{000A}' | '\u{000B}' => {
+                // Form Feed
+                '\u{000A}' | '\u{000B}' | '\u{000C}' => {
                     self.lines.push(line);
                     line = String::new();
                 }
@@ -51,6 +52,14 @@ mod tests {
     fn it_splits_lines_by_vertical_tab() {
         let mut compiler = Compiler::new();
         compiler.parse("0 0 0 0\x0B0 0 0 0");
+
+        assert_eq!(compiler.lines.len(), 2);
+    }
+
+    #[test]
+    fn it_splits_lines_by_form_feed() {
+        let mut compiler = Compiler::new();
+        compiler.parse("0 0 0 0\x0C0 0 0 0");
 
         assert_eq!(compiler.lines.len(), 2);
     }
