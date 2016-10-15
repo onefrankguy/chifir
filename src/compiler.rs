@@ -17,10 +17,12 @@ impl Compiler {
         while let Some(c) = chars.next() {
             match c {
                 // Line Feed
-                '\u{000A}' => {
+                // Vertical Tab
+                '\u{000A}' | '\u{000B}' => {
                     self.lines.push(line);
                     line = String::new();
                 }
+
                 _ => {
                     line.push(c);
                 }
@@ -41,6 +43,14 @@ mod tests {
     fn it_splits_lines_by_line_feed() {
         let mut compiler = Compiler::new();
         compiler.parse("0 0 0 0\n0 0 0 0");
+
+        assert_eq!(compiler.lines.len(), 2);
+    }
+
+    #[test]
+    fn it_splits_lines_by_vertical_tab() {
+        let mut compiler = Compiler::new();
+        compiler.parse("0 0 0 0\x0B0 0 0 0");
 
         assert_eq!(compiler.lines.len(), 2);
     }
