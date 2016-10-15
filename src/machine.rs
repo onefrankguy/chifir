@@ -93,6 +93,9 @@ impl<W: Write, R: Read> Machine<W, R> {
 
     fn exec(&mut self, opcode: u32, a: u32, b: u32, c: u32) {
         match opcode {
+            // Halt execution
+            0 => {}
+
             // PC <- M[A]
             1 => {
                 self.counter = self.read(a);
@@ -225,6 +228,11 @@ impl<W: Write, R: Read> Machine<W, R> {
                 }
             }
 
+            // Skip this instruction
+            16 => {
+                self.counter += 4;
+            }
+
             // Unknown opcode
             _ => {}
         }
@@ -250,6 +258,16 @@ mod tests {
         m.step();
         assert_eq!(counter, m.loc());
         assert_eq!(&memory, m.dump());
+    }
+
+    #[test]
+    fn it_runs_opcode_0() {
+        // Halt execution
+        let mut m = Machine { memory: vec![0], ..Machine::new() };
+
+        assert_eq!(0, m.loc());
+        m.step();
+        assert_eq!(0, m.loc());
     }
 
     #[test]
@@ -535,6 +553,16 @@ mod tests {
 
         // Only save the last key pressed.
         assert_eq!(&vec![15, 32, 0, 0], m.dump());
+    }
+
+    #[test]
+    fn it_runs_opcode_16() {
+        // Skip this instruction
+        let mut m = Machine { memory: vec![16], ..Machine::new() };
+
+        assert_eq!(0, m.loc());
+        m.step();
+        assert_eq!(4, m.loc());
     }
 
     #[test]
