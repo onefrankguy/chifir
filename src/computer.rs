@@ -1,14 +1,14 @@
 use termion;
 
 use super::sixel;
-use std::io::{Write, Read};
+use std::io::{Write, Read, Cursor};
 use std::vec::Vec;
 
 pub struct Computer<W: Write, R: Read> {
-    pub memory: Vec<u32>,
-    pub counter: u32,
-    pub output: W,
-    pub input: R,
+    memory: Vec<u32>,
+    counter: u32,
+    output: W,
+    input: R,
 }
 
 impl<W: Write, R: Read> Computer<W, R> {
@@ -406,6 +406,13 @@ impl<W: Write, R: Read> Computer<W, R> {
             // Unknown opcode
             _ => {}
         }
+    }
+}
+
+impl Computer<Cursor<Vec<u8>>, Cursor<Vec<u8>>> {
+    pub fn input(&mut self, data: &str) {
+        write!(self.input, "{}", data).unwrap();
+        self.input.set_position(0);
     }
 }
 

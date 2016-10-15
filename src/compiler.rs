@@ -30,8 +30,7 @@
 //! assert_eq!(computer.next(), 0xf);
 //!
 //! // Put 0x71 into the input, as if "q" was pressed.
-//! write!(computer.input, "{}", "\x71").unwrap();
-//! computer.input.set_position(0);
+//! computer.input("\x71");
 //!
 //! // 0x71 will be read from input.
 //! computer.step();
@@ -50,8 +49,7 @@
 //! assert_eq!(computer.next(), 0xf);
 //!
 //! // Put 0x3 into the input, as if "Ctrl+C" was pressed.
-//! write!(computer.input, "{}", "\x03").unwrap();
-//! computer.input.set_position(0);
+//! computer.input("\x03");
 //!
 //! // Run the read, subtract, and check loop again.
 //! computer.step();
