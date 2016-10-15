@@ -1,7 +1,5 @@
 //! A compiler for transforming assembly into bytecodes.
 //!
-//! # Examples
-//!
 //! This is the smallest Chifir program that does something useful. It exits
 //! when <kbd>Ctrl</kbd> + <kbd>C</kbd> is pressed.
 //!
@@ -23,8 +21,10 @@
 //! ]);
 //! ```
 //!
-//! Because raw machine code is hard to read, assembly programs can include
-//! comments. Comments start with a semicolon and go to the end of the line.
+//! # Comments
+//!
+//! Because raw machine code is hard to read, programs can include comments.
+//! Comments start with a semicolon and go to the end of the line.
 //!
 //! ```
 //! let mut compiler = chifir::compiler::Compiler::new();
@@ -47,12 +47,14 @@
 //! The term **PC** in the comments refers to the program counter. Chifir starts
 //! with the program counter at 0. The term **M[X]** in the comments refers to
 //! the **X**<sup>th</sup> location in memory. Memory is allocated when it's
-//! accessed, and Chifir programs can use up to 16 GiB of memory.
+//! accessed, and programs can use up to 16 GiB of memory.
 //!
-//! Every opcode and operand in a Chifir program is 32 bits. This Chifir program
-//! is written in assembly with hexadecimal values for the opcodes and operands.
-//! Because hex values for opcodes are hard to memorize, assembly programs can
-//! use three letter abbreviations for the opcodes instead.
+//! # Instructions
+//!
+//! Chifir instructions consist of an opcode followed by three operands. Both
+//! opcodes and operands are 32 bits and are written in hexadecimal. Because hex
+//! values for opcodes are hard to memorize, programs can use three letter
+//! abbreviations for opcodes instead.
 //!
 //! ```
 //! let mut compiler = chifir::compiler::Compiler::new();
@@ -72,10 +74,46 @@
 //! ]);
 //! ```
 //!
-//! [Table 1](#table-1) has a full list of Chifir opcodes.
+//! [Table 1](#table-1) has a full list of opcodes and their abbreviations.
 //!
 //!
-//! # Table 1 #
+//! # Labels
+//!
+//! Labels can be used as references to locations in a program. Labels have two
+//! parts, definitions and references. A label definition is on a line by
+//! itself and ends with a semicolon. A label reference is used as an operand in
+//! an instruction.
+//!
+//! When the compiler finds a label reference, it replaces the reference with
+//! the location in memory of the first instruction that came after the label
+//! was defined.
+//!
+//! ```
+//! let mut compiler = chifir::compiler::Compiler::new();
+//!
+//! compiler.parse("
+//! ; Halt when Ctrl+C is pressed.
+//!
+//! check-ctrl-c:
+//!   key 2 0 3
+//!   sub 2 2 3
+//!   beq b 2 exit
+//!   lpc e check-ctrl-c 0
+//!
+//! exit:
+//!   brk 0 0 0
+//! ");
+//!
+//! assert_eq!(compiler.bytecodes, vec![
+//! 0xf, 0x2, 0x0, 0x3,
+//! 0x8, 0x2, 0x2, 0x3,
+//! 0x2, 0xb, 0x2, 0x10,
+//! 0x1, 0xe, 0x0, 0x0,
+//! 0x0, 0x0, 0x0, 0x0
+//! ]);
+//! ```
+//!
+//! # Table 1
 //!
 //! A complete list of all Chifir opcodes.
 //!
