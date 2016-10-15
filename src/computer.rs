@@ -4,16 +4,16 @@ use super::sixel;
 use std::io::{Write, Read, Cursor};
 use std::vec::Vec;
 
-pub struct Machine<W: Write, R: Read> {
+pub struct Computer<W: Write, R: Read> {
     pub memory: Vec<u32>,
     pub counter: u32,
     pub output: W,
     pub input: R,
 }
 
-impl Machine<Cursor<Vec<u8>>, Cursor<Vec<u8>>> {
+impl Computer<Cursor<Vec<u8>>, Cursor<Vec<u8>>> {
     pub fn new() -> Self {
-        Machine {
+        Computer {
             // Default to a valid program in memory.
             // This one is an infinite loop.
             memory: vec![1, 2, 0, 0],
@@ -24,7 +24,7 @@ impl Machine<Cursor<Vec<u8>>, Cursor<Vec<u8>>> {
     }
 }
 
-impl<W: Write, R: Read> Machine<W, R> {
+impl<W: Write, R: Read> Computer<W, R> {
     pub fn loc(&self) -> u32 {
         self.counter
     }
@@ -241,11 +241,11 @@ impl<W: Write, R: Read> Machine<W, R> {
 
 #[cfg(test)]
 mod tests {
-    use super::Machine;
+    use super::Computer;
 
     #[test]
     fn it_defaults_to_an_infinite_loop() {
-        let mut m = Machine::new();
+        let mut m = Computer::new();
 
         // Read initial memory and program counter.
         let memory = m.dump().to_vec();
@@ -263,7 +263,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_0() {
         // Halt execution
-        let mut m = Machine { memory: vec![0], ..Machine::new() };
+        let mut m = Computer { memory: vec![0], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -273,7 +273,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_1() {
         // PC <- M[A]
-        let mut m = Machine { memory: vec![1, 4, 0, 0, 2], ..Machine::new() };
+        let mut m = Computer { memory: vec![1, 4, 0, 0, 2], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -283,7 +283,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_2_then_branch() {
         // If M[B] = 0, then PC <- M[A]
-        let mut m = Machine { memory: vec![2, 4, 5, 0, 2, 0], ..Machine::new() };
+        let mut m = Computer { memory: vec![2, 4, 5, 0, 2, 0], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -293,7 +293,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_2_else_branch() {
         // If M[B] = 0, then PC <- M[A]
-        let mut m = Machine { memory: vec![2, 4, 5, 0, 2, 1], ..Machine::new() };
+        let mut m = Computer { memory: vec![2, 4, 5, 0, 2, 1], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -303,7 +303,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_3() {
         // M[A] <- PC
-        let mut m = Machine { memory: vec![3, 4, 0, 0, 1], ..Machine::new() };
+        let mut m = Computer { memory: vec![3, 4, 0, 0, 1], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -314,7 +314,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_4() {
         // M[A] <- M[B]
-        let mut m = Machine { memory: vec![4, 4, 5, 0, 6, 7], ..Machine::new() };
+        let mut m = Computer { memory: vec![4, 4, 5, 0, 6, 7], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -325,7 +325,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_5() {
         // M[A] <- M[M[B]]
-        let mut m = Machine { memory: vec![5, 4, 5, 0, 6, 7, 0, 8], ..Machine::new() };
+        let mut m = Computer { memory: vec![5, 4, 5, 0, 6, 7, 0, 8], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -336,7 +336,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_6() {
         // M[M[B]] <- M[A]
-        let mut m = Machine { memory: vec![6, 4, 5, 0, 8, 6, 7], ..Machine::new() };
+        let mut m = Computer { memory: vec![6, 4, 5, 0, 8, 6, 7], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -347,7 +347,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_7() {
         // M[A] <- M[B] + M[C]
-        let mut m = Machine { memory: vec![7, 4, 5, 6, 0, 11, 2], ..Machine::new() };
+        let mut m = Computer { memory: vec![7, 4, 5, 6, 0, 11, 2], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -358,7 +358,7 @@ mod tests {
     #[test]
     fn it_prevents_overflow_when_running_opcode_7() {
         // M[A] <- M[B] + M[C]
-        let mut m = Machine { memory: vec![7, 4, 5, 6, 1, u32::max_value(), 1], ..Machine::new() };
+        let mut m = Computer { memory: vec![7, 4, 5, 6, 1, u32::max_value(), 1], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -369,7 +369,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_8() {
         // M[A] <- M[B] - M[C]
-        let mut m = Machine { memory: vec![8, 4, 5, 6, 0, 11, 2], ..Machine::new() };
+        let mut m = Computer { memory: vec![8, 4, 5, 6, 0, 11, 2], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -380,7 +380,7 @@ mod tests {
     #[test]
     fn it_prevents_overflow_while_runing_opcode_8() {
         // M[A] <- M[B] - M[C]
-        let mut m = Machine { memory: vec![8, 4, 5, 6, 1, 2, 11], ..Machine::new() };
+        let mut m = Computer { memory: vec![8, 4, 5, 6, 1, 2, 11], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -391,7 +391,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_9() {
         // M[A] <- M[B] * M[C]
-        let mut m = Machine { memory: vec![9, 4, 5, 6, 0, 11, 2], ..Machine::new() };
+        let mut m = Computer { memory: vec![9, 4, 5, 6, 0, 11, 2], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -402,7 +402,7 @@ mod tests {
     #[test]
     fn it_prevents_overflow_when_running_opcode_9() {
         // M[A] <- M[B] * M[C]
-        let mut m = Machine { memory: vec![9, 4, 5, 6, 0, u32::max_value(), 2], ..Machine::new() };
+        let mut m = Computer { memory: vec![9, 4, 5, 6, 0, u32::max_value(), 2], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -413,7 +413,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_10() {
         // M[A] <- M[B] / M[C]
-        let mut m = Machine { memory: vec![10, 4, 5, 6, 0, 11, 2], ..Machine::new() };
+        let mut m = Computer { memory: vec![10, 4, 5, 6, 0, 11, 2], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -424,7 +424,7 @@ mod tests {
     #[test]
     fn it_prevents_divide_by_zero_errors_when_running_opcode_10() {
         // M[A] <- M[B] / M[C]
-        let mut m = Machine { memory: vec![10, 4, 5, 6, 1, 11, 0], ..Machine::new() };
+        let mut m = Computer { memory: vec![10, 4, 5, 6, 1, 11, 0], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -435,7 +435,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_11() {
         // M[A] <- M[B] % M[C]
-        let mut m = Machine { memory: vec![11, 4, 5, 6, 0, 11, 2], ..Machine::new() };
+        let mut m = Computer { memory: vec![11, 4, 5, 6, 0, 11, 2], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -446,7 +446,7 @@ mod tests {
     #[test]
     fn it_prevents_divide_by_zero_errors_when_running_opcode_11() {
         // M[A] <- M[B] % M[C]
-        let mut m = Machine { memory: vec![11, 4, 5, 6, 1, 11, 0], ..Machine::new() };
+        let mut m = Computer { memory: vec![11, 4, 5, 6, 1, 11, 0], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -457,7 +457,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_12_then_branch() {
         // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
-        let mut m = Machine { memory: vec![12, 4, 5, 6, 2, 8, 9], ..Machine::new() };
+        let mut m = Computer { memory: vec![12, 4, 5, 6, 2, 8, 9], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -468,7 +468,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_12_else_branch() {
         // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
-        let mut m = Machine { memory: vec![12, 4, 5, 6, 2, 9, 8], ..Machine::new() };
+        let mut m = Computer { memory: vec![12, 4, 5, 6, 2, 9, 8], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -480,7 +480,7 @@ mod tests {
     fn it_runs_opcode_13() {
         // M[A] <- NOT(M[B] AND M[C])
         let mut m =
-            Machine { memory: vec![13, 4, 5, 6, 0, 0xfffffffe, 0xfffffffd], ..Machine::new() };
+            Computer { memory: vec![13, 4, 5, 6, 0, 0xfffffffe, 0xfffffffd], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -491,7 +491,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_14() {
         // Refresh the screen
-        let mut m = Machine { memory: vec![14, 0, 0, 0], ..Machine::new() };
+        let mut m = Computer { memory: vec![14, 0, 0, 0], ..Computer::new() };
 
         // Move the program counter after rendering.
         assert_eq!(0, m.loc());
@@ -518,7 +518,7 @@ mod tests {
         let output = Cursor::new(Vec::new());
         let input = Cursor::new(Vec::new());
 
-        let mut m = Machine {
+        let mut m = Computer {
             memory: vec![15, 1, 0, 0],
             counter: 0,
             output: output,
@@ -539,7 +539,7 @@ mod tests {
         let output = Cursor::new(Vec::new());
         let input = Cursor::new(vec![8, 10, 13, 32]);
 
-        let mut m = Machine {
+        let mut m = Computer {
             memory: vec![15, 1, 0, 0],
             counter: 0,
             output: output,
@@ -558,7 +558,7 @@ mod tests {
     #[test]
     fn it_runs_opcode_16() {
         // Skip this instruction
-        let mut m = Machine { memory: vec![16], ..Machine::new() };
+        let mut m = Computer { memory: vec![16], ..Computer::new() };
 
         assert_eq!(0, m.loc());
         m.step();
@@ -567,10 +567,10 @@ mod tests {
 
     #[test]
     fn it_provides_safe_memory_access_when_stepping() {
-        let mut m = Machine {
+        let mut m = Computer {
             memory: vec![0],
             counter: 3,
-            ..Machine::new()
+            ..Computer::new()
         };
 
         m.step();

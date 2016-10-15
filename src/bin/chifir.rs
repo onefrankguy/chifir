@@ -26,7 +26,7 @@ fn main() {
     1 f 0 0  ; 12 - Else PC <- 0
     ");
 
-    let mut vm = chifir::computer::Machine {
+    let mut vm = chifir::computer::Computer {
         memory: compiler.bytecodes.clone(),
         counter: 0,
         output: stdout,
