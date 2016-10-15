@@ -25,7 +25,11 @@ impl Compiler {
             let trimmed_line = line.trim();
             if !trimmed_line.is_empty() && !trimmed_line.starts_with(";") {
                 let mut instruction = String::new();
-                instruction.push_str(trimmed_line);
+                let stripped_instruction = match trimmed_line.find(';') {
+                    Some(index) => trimmed_line.split_at(index).0,
+                    None => trimmed_line,
+                };
+                instruction.push_str(stripped_instruction.trim());
                 self.instructions.push(instruction);
             }
         }
@@ -172,5 +176,32 @@ mod tests {
 
         assert_eq!(compiler.lines.len(), 2);
         assert_eq!(compiler.instructions.len(), 1);
+    }
+
+    #[test]
+    fn it_strips_inline_comments() {
+        let mut compiler = Compiler::new();
+        compiler.parse("0 0 0 0; inline comment\n");
+
+        assert_eq!(compiler.lines.len(), 1);
+        assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
+    }
+
+    #[test]
+    fn it_strips_inline_comments_starting_with_spaces() {
+        let mut compiler = Compiler::new();
+        compiler.parse("0 0 0 0 ; inline comment\n");
+
+        assert_eq!(compiler.lines.len(), 1);
+        assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
+    }
+
+    #[test]
+    fn it_strips_inline_comments_starting_with_tabs() {
+        let mut compiler = Compiler::new();
+        compiler.parse("0 0 0 0\t; inline comment\n");
+
+        assert_eq!(compiler.lines.len(), 1);
+        assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
     }
 }
