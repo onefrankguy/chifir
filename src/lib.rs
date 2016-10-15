@@ -1,5 +1,5 @@
 extern crate termion;
 
-pub mod machine;
+pub mod computer;
 mod sixel;
 pub mod compiler;
