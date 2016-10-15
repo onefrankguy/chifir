@@ -26,7 +26,34 @@ impl Compiler {
         self.compile_bytecodes();
     }
 
-    // Transform and operand into a bytecode. Undefined operands, or thoses that
+    // Transform an opcode into a bytecode. Undefined opcodes, or those that
+    // fail to parse, are treated as zero. This maintains the concept of all
+    // uninitialized memory being zeroed out.
+    fn parse_opcode(&self, opcode: Option<&str>) -> u32 {
+        match opcode {
+            Some("brk") => 0,
+            Some("lpc") => 1,
+            Some("beq") => 2,
+            Some("spc") => 3,
+            Some("lea") => 4,
+            Some("lra") => 5,
+            Some("sra") => 6,
+            Some("add") => 7,
+            Some("sub") => 8,
+            Some("mul") => 9,
+            Some("div") => 10,
+            Some("mod") => 11,
+            Some("cmp") => 12,
+            Some("nad") => 13,
+            Some("drw") => 14,
+            Some("key") => 15,
+            Some("nop") => 16,
+            Some(opcode) => u32::from_str_radix(opcode, 16).unwrap_or(0),
+            None => 0,
+        }
+    }
+
+    // Transform an operand into a bytecode. Undefined operands, or thoses that
     // fail to parse, are treated as zero. This maintains the concept of all
     // uninitialized memory being zeroed out.
     fn parse_operand(&self, operand: Option<&str>, opcode_address: u32) -> u32 {
@@ -67,30 +94,9 @@ impl Compiler {
                     let mut bytecodes = instruction.split_whitespace();
 
                     // Opcode
-                    match bytecodes.next() {
-                        Some("brk") => self.bytecodes.push(0),
-                        Some("lpc") => self.bytecodes.push(1),
-                        Some("beq") => self.bytecodes.push(2),
-                        Some("spc") => self.bytecodes.push(3),
-                        Some("lea") => self.bytecodes.push(4),
-                        Some("lra") => self.bytecodes.push(5),
-                        Some("sra") => self.bytecodes.push(6),
-                        Some("add") => self.bytecodes.push(7),
-                        Some("sub") => self.bytecodes.push(8),
-                        Some("mul") => self.bytecodes.push(9),
-                        Some("div") => self.bytecodes.push(10),
-                        Some("mod") => self.bytecodes.push(11),
-                        Some("cmp") => self.bytecodes.push(12),
-                        Some("nad") => self.bytecodes.push(13),
-                        Some("drw") => self.bytecodes.push(14),
-                        Some("key") => self.bytecodes.push(15),
-                        Some("nop") => self.bytecodes.push(16),
-                        Some(opcode) => {
-                            let bytecode = u32::from_str_radix(opcode, 16).unwrap_or(0);
-                            self.bytecodes.push(bytecode);
-                        }
-                        None => self.bytecodes.push(0),
-                    }
+                    let opcode = bytecodes.next();
+                    let opcode = self.parse_opcode(opcode);
+                    self.bytecodes.push(opcode);
 
                     // Operand A
                     let bytecode_a = bytecodes.next();
