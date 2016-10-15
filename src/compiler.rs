@@ -24,13 +24,11 @@ impl Compiler {
         while let Some(line) = lines.next() {
             let trimmed_line = line.trim();
             if !trimmed_line.is_empty() && !trimmed_line.starts_with(";") {
-                let mut instruction = String::new();
-                let stripped_instruction = match trimmed_line.find(';') {
+                let instruction = match trimmed_line.find(';') {
                     Some(index) => trimmed_line.split_at(index).0,
                     None => trimmed_line,
                 };
-                instruction.push_str(stripped_instruction.trim());
-                self.instructions.push(instruction);
+                self.instructions.push(instruction.trim().to_string());
             }
         }
     }
