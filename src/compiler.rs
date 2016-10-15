@@ -3,15 +3,32 @@ use std::string::String;
 
 struct Compiler {
     pub lines: Vec<String>,
+    pub instructions: Vec<String>,
 }
 
 impl Compiler {
     pub fn new() -> Self {
-        Compiler { lines: Vec::new() }
+        Compiler {
+            lines: Vec::new(),
+            instructions: Vec::new(),
+        }
     }
 
     pub fn parse(&mut self, assembly: &str) {
         self.split_lines(assembly);
+        self.strip_comments();
+    }
+
+    fn strip_comments(&mut self) {
+        let mut lines = self.lines.iter();
+        while let Some(line) = lines.next() {
+            let trimmed_line = line.trim();
+            if !trimmed_line.is_empty() && !trimmed_line.starts_with(";") {
+                let mut instruction = String::new();
+                instruction.push_str(trimmed_line);
+                self.instructions.push(instruction);
+            }
+        }
     }
 
     fn split_lines(&mut self, assembly: &str) {
@@ -128,5 +145,32 @@ mod tests {
         compiler.parse("0 0 0 0\r\n0 0 0 0\r\n");
 
         assert_eq!(compiler.lines.len(), 2);
+    }
+
+    #[test]
+    fn it_strips_single_line_comments() {
+        let mut compiler = Compiler::new();
+        compiler.parse("; single line comment\n0 0 0 0\n");
+
+        assert_eq!(compiler.lines.len(), 2);
+        assert_eq!(compiler.instructions.len(), 1);
+    }
+
+    #[test]
+    fn it_strips_single_line_comments_starting_with_spaces() {
+        let mut compiler = Compiler::new();
+        compiler.parse(" ; single line comment\n0 0 0 0\n");
+
+        assert_eq!(compiler.lines.len(), 2);
+        assert_eq!(compiler.instructions.len(), 1);
+    }
+
+    #[test]
+    fn it_strips_single_line_comments_starting_with_tabs() {
+        let mut compiler = Compiler::new();
+        compiler.parse("\t; single line comment\n0 0 0 0\n");
+
+        assert_eq!(compiler.lines.len(), 2);
+        assert_eq!(compiler.instructions.len(), 1);
     }
 }
