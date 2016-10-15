@@ -1,18 +1,18 @@
 use termion;
 
 use super::sixel;
-use std::io::{Write, Read, Cursor};
+use std::io::{Read, Write, Cursor};
 use std::vec::Vec;
 
-pub struct Computer<W: Write, R: Read> {
+pub struct Computer<R: Read, W: Write> {
     memory: Vec<u32>,
     counter: u32,
-    output: W,
     input: R,
+    output: W,
 }
 
-impl<W: Write, R: Read> Computer<W, R> {
-    /// Create a new `Computer<W, R>` bound to the I/O channels.
+impl<R: Read, W: Write> Computer<R, W> {
+    /// Create a new `Computer<R, W>` bound to the I/O channels.
     ///
     /// The computer will start without any memory. The program counter will
     /// start at zero.
@@ -34,8 +34,8 @@ impl<W: Write, R: Read> Computer<W, R> {
         Computer {
             memory: Vec::new(),
             counter: 0,
-            output: output,
             input: input,
+            output: output,
         }
     }
 
