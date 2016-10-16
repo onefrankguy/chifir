@@ -4,7 +4,7 @@
 //! when <kbd>Ctrl</kbd> + <kbd>C</kbd> is pressed.
 //!
 //! ```
-//! use std::io::{Write, Cursor};
+//! use std::io::{Write, Seek, SeekFrom, Cursor};
 //! use chifir::compiler::Compiler;
 //! use chifir::computer::Computer;
 //!
@@ -17,9 +17,15 @@
 //! 1 e 0 0
 //! ");
 //!
-//! let input = Cursor::new(Vec::new());
-//! let output = Cursor::new(Vec::new());
-//! let mut computer = Computer::new(input, output);
+//! let mut input1 = Cursor::new(Vec::new());
+//! write!(input1, "{}", "\x71").unwrap();
+//! input1.seek(SeekFrom::Start(0));
+//!
+//! let mut input2 = Cursor::new(Vec::new());
+//! write!(input2, "{}", "\x03").unwrap();
+//! input2.seek(SeekFrom::Start(0));
+//!
+//! let mut computer = Computer::new();
 //! computer.load(compiler.bytecodes);
 //!
 //! // The first instruction will be executed.
@@ -30,7 +36,7 @@
 //! assert_eq!(computer.next(), 0xf);
 //!
 //! // Put 0x71 into the input, as if "q" was pressed.
-//! computer.input("\x71");
+//! computer.input(&mut input1);
 //!
 //! // 0x71 will be read from input.
 //! computer.step();
@@ -49,7 +55,7 @@
 //! assert_eq!(computer.next(), 0xf);
 //!
 //! // Put 0x3 into the input, as if "Ctrl+C" was pressed.
-//! computer.input("\x03");
+//! computer.input(&mut input2);
 //!
 //! // Run the read, subtract, and check loop again.
 //! computer.step();

@@ -9,7 +9,7 @@ use std::io::{self, Write};
 fn main() {
     let stdout = io::stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
-    let stdin = async_stdin();
+    let mut stdin = async_stdin();
 
     write!(stdout,
            "{}{}",
@@ -26,7 +26,9 @@ fn main() {
     1 f 0 0  ; 12 - Else PC <- 0
     ");
 
-    let mut vm = chifir::computer::Computer::new(stdin, stdout);
+    let mut vm = chifir::computer::Computer::new();
+    vm.input(&mut stdin);
+    vm.output(&mut stdout);
     vm.load(compiler.bytecodes);
 
     while vm.next() != 0 {
