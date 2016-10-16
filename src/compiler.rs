@@ -212,6 +212,7 @@
 //! |14    |`drw`       |Refresh the screen                                       |
 //! |15    |`key`       |Get the last key pressed and store it in M[A]            |
 //! |16    |`nop`       |Skip this instruction                                    |
+//! |17    |`cfv`       |Configure display at M[A] with width B and height C      |
 
 use std::vec::Vec;
 use std::string::String;
@@ -263,6 +264,7 @@ impl Compiler {
             Some("drw") => 14,
             Some("key") => 15,
             Some("nop") => 16,
+            Some("cfv") => 17,
             Some(opcode) => u32::from_str_radix(opcode, 16).unwrap_or(0),
             None => 0,
         }

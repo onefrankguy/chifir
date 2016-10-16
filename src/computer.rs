@@ -12,6 +12,9 @@ pub struct Computer<'a> {
     input: Option<&'a mut (Read + 'a)>,
     output: Option<&'a mut (Write + 'a)>,
     keyboard: Option<u8>,
+    display_address: u32,
+    display_width: u32,
+    display_height: u32,
     display: Vec<u8>,
     read_position: usize,
 }
@@ -39,6 +42,9 @@ impl<'a> Computer<'a> {
             input: None,
             output: None,
             keyboard: None,
+            display_address: 1_048_576,
+            display_width: 512,
+            display_height: 684,
             display: Vec::new(),
             read_position: 0,
         }
@@ -333,9 +339,9 @@ impl<'a> Computer<'a> {
     }
 
     fn render(&mut self) {
-        let width = 512;
-        let height = 684;
-        let start = 1_048_576;
+        let width = self.display_width;
+        let height = self.display_height;
+        let start = self.display_address;
         let end = start + (width * height);
         self.read(start);
         self.read(end);
@@ -520,6 +526,14 @@ impl<'a> Computer<'a> {
 
             // Skip this instruction
             16 => {
+                self.counter += 4;
+            }
+
+            // Configure display at M[A] with width B and height C
+            17 => {
+                self.display_address = a;
+                self.display_width = b;
+                self.display_height = c;
                 self.counter += 4;
             }
 
@@ -880,6 +894,21 @@ mod tests {
         assert_eq!(0, m.position());
         m.step();
         assert_eq!(4, m.position());
+    }
+
+    #[test]
+    fn it_runs_opcode_17() {
+        // Configure display at M[A] with width B and height C
+        let mut m = Computer::new();
+        m.load_from_slice(&[17, 100, 640, 480]);
+
+        assert_eq!(0, m.position());
+        m.step();
+        assert_eq!(4, m.position());
+
+        assert_eq!(100, m.display_address);
+        assert_eq!(640, m.display_width);
+        assert_eq!(480, m.display_height);
     }
 
     #[test]
