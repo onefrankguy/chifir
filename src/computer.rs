@@ -357,7 +357,7 @@ impl<'a> Computer<'a> {
                "{}{}{}{}",
                termion::cursor::Goto(1, 1),
                sixel::begin(),
-               sixel::from(memory, width, height, true),
+               sixel::from(memory, width, height, false),
                sixel::end())
             .unwrap();
         buffer.flush().unwrap();

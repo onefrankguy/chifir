@@ -27,9 +27,11 @@ pub fn from(memory: &[u32], width: usize, height: usize, border: bool) -> String
             let mut byte: u8 = 0;
 
             for y in 0..6 {
-                let offset = x + (y * width);
-                if memory[offset] > 0 {
-                    byte = byte | (1 << y);
+                let offset = x + ((row + y) * width);
+                if offset < memory.len() {
+                  if memory[offset] > 0 {
+                      byte = byte | (1 << y);
+                  }
                 }
             }
 
