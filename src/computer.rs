@@ -1,14 +1,16 @@
 use termion;
 
 use super::sixel;
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::vec::Vec;
 
+///! A virtual computer for executing bytecode.
 pub struct Computer<'a> {
     memory: Vec<u32>,
     counter: u32,
     input: Option<&'a mut (Read + 'a)>,
     output: Option<&'a mut (Write + 'a)>,
+    keyboard: Option<u8>,
 }
 
 impl<'a> Computer<'a> {
@@ -33,9 +35,55 @@ impl<'a> Computer<'a> {
             counter: 0,
             input: None,
             output: None,
+            keyboard: None,
         }
     }
 
+    /// Binds a reader for getting keyboard input.
+    ///
+    /// Only the last pressed key is used. An in memory keyboard is provided
+    /// through the `Write` trait.
+    ///
+    /// # Examples
+    ///
+    /// Binding an input reader borrow a mutable reference, so the input must
+    /// outlive the computer.
+    ///
+    /// ```
+    /// use chifir::computer::Computer;
+    /// use std::io::{Cursor, Write};
+    ///
+    /// let mut input = Cursor::new(vec![0x8, 0x71]);
+    ///
+    /// let mut computer  = Computer::new();
+    /// computer.load(vec![
+    ///     0xf, 0x2, 0x0, 0x0
+    /// ]);
+    ///
+    /// computer.input(&mut input);
+    /// computer.step();
+    ///
+    /// assert_eq!([0xf, 0x2, 0x71, 0x0], computer.dump());
+    /// ```
+    ///
+    /// The computer can outlive input to the in memory keyboard.
+    ///
+    /// ```
+    /// use chifir::computer::Computer;
+    /// use std::io::Write;
+    ///
+    /// let mut computer = Computer::new();
+    /// computer.load(vec![
+    ///     0xf, 0x2, 0x0, 0x0
+    /// ]);
+    ///
+    /// let input = &[0x8, 0x71];
+    ///
+    /// computer.write(input).unwrap();
+    /// computer.step();
+    ///
+    /// assert_eq!([0xf, 0x2, 0x71, 0x0], computer.dump());
+    /// ```
     pub fn input(&mut self, input: &'a mut Read) {
         self.input = Some(input);
     }
@@ -379,14 +427,14 @@ impl<'a> Computer<'a> {
             // Get one character from the keyboard and store it into M[A]
             15 => {
                 let mut bytes = Vec::new();
-                let mut result: Option<u32> = None;
+                let mut result = self.keyboard;
 
                 match self.input {
                     Some(ref mut input) => {
                         match input.read_to_end(&mut bytes) {
                             Ok(size) => {
                                 if size > 0 {
-                                    result = Some(bytes[size - 1] as u32)
+                                    result = Some(bytes[size - 1])
                                 }
                             }
                             _ => {}
@@ -397,7 +445,7 @@ impl<'a> Computer<'a> {
 
                 match result {
                     Some(byte) => {
-                        self.write(a, byte);
+                        self.write(a, byte as u32);
                         self.counter += 4;
                     }
                     _ => {}
@@ -412,6 +460,25 @@ impl<'a> Computer<'a> {
             // Unknown opcode
             _ => {}
         }
+    }
+}
+
+impl<'a> Write for Computer<'a> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        match buf.last() {
+            Some(byte) => {
+                self.keyboard = Some(*byte);
+                Ok(buf.len())
+            }
+            None => {
+                self.keyboard = None;
+                Ok(0)
+            }
+        }
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
     }
 }
 
