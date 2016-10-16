@@ -418,7 +418,7 @@ impl<'a> Computer<'a> {
 #[cfg(test)]
 mod tests {
     use super::Computer;
-    use std::io::{Read, Seek, SeekFrom, Cursor};
+    use std::io::Cursor;
 
     #[test]
     fn it_runs_opcode_0() {
@@ -684,9 +684,7 @@ mod tests {
             assert_eq!(4, m.position());
         }
 
-        let mut buffer: Vec<u8> = Vec::new();
-        output.seek(SeekFrom::Start(0)).unwrap();
-        output.read_to_end(&mut buffer).unwrap();
+        let buffer = output.get_ref();
 
         // Move the cursor to (1,1).
         assert_eq!(&buffer[0..6], &[27, 91, 49, 59, 49, 72]);
