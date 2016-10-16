@@ -1,16 +1,19 @@
+//! A virtual computer for executing bytecode.
+
 use termion;
 
 use super::sixel;
-use std::io::{self, Read, Write};
+use std::io::{self, Read, Write, Cursor};
 use std::vec::Vec;
 
-///! A virtual computer for executing bytecode.
 pub struct Computer<'a> {
     memory: Vec<u32>,
     counter: u32,
     input: Option<&'a mut (Read + 'a)>,
     output: Option<&'a mut (Write + 'a)>,
     keyboard: Option<u8>,
+    display: Vec<u8>,
+    read_position: usize,
 }
 
 impl<'a> Computer<'a> {
@@ -36,6 +39,8 @@ impl<'a> Computer<'a> {
             input: None,
             output: None,
             keyboard: None,
+            display: Vec::new(),
+            read_position: 0,
         }
     }
 
@@ -88,6 +93,61 @@ impl<'a> Computer<'a> {
         self.input = Some(input);
     }
 
+    /// Binds a writer for getting display output.
+    ///
+    /// An in memory display is provided through the `Read` trait.
+    ///
+    /// # Examples
+    ///
+    /// Binding an output writer borrow a mutable reference, so the output must
+    /// outlive the computer.
+    ///
+    /// ```
+    /// use chifir::computer::Computer;
+    /// use std::io::{Cursor, Read};
+    ///
+    /// let mut output = Cursor::new(Vec::new());
+    ///
+    /// {
+    ///     let mut computer  = Computer::new();
+    ///     computer.load(vec![
+    ///         14, 0, 0, 0
+    ///     ]);
+    ///
+    ///     computer.output(&mut output);
+    ///     computer.step();
+    /// }
+    ///
+    /// let output = output.get_ref();
+    ///
+    /// // Cursor is moved to (1,1) when rendering output
+    /// let move_cursor: [u8; 6] = [27, 91, 49, 59, 49, 72];
+    ///
+    /// assert_eq!(move_cursor, output[0..6]);
+    /// ```
+    ///
+    /// The computer can outlive input to the in memory display.
+    ///
+    /// ```
+    /// use chifir::computer::Computer;
+    /// use std::io::{Read, Cursor};
+    ///
+    /// let mut computer = Computer::new();
+    /// computer.load(vec![
+    ///     14, 0, 0, 0
+    /// ]);
+    ///
+    /// computer.step();
+    ///
+    /// let mut output = Vec::new();
+    ///
+    /// computer.read_to_end(&mut output).unwrap();
+    ///
+    /// // Cursor is moved to (1,1) when rendering output
+    /// let move_cursor: [u8; 6] = [27, 91, 49, 59, 49, 72];
+    ///
+    /// assert_eq!(move_cursor, output[0..6]);
+    /// ```
     pub fn output(&mut self, output: &'a mut Write) {
         self.output = Some(output);
     }
@@ -286,15 +346,21 @@ impl<'a> Computer<'a> {
         let end = end as usize;
         let memory = &self.memory[start..end];
 
+        let mut buffer = Cursor::new(Vec::new());
+        write!(buffer,
+               "{}{}{}{}",
+               termion::cursor::Goto(1, 1),
+               sixel::begin(),
+               sixel::from(memory, width, height, true),
+               sixel::end())
+            .unwrap();
+        buffer.flush().unwrap();
+        self.display = buffer.into_inner();
+        self.read_position = 0;
+
         match self.output {
             Some(ref mut output) => {
-                write!(output,
-                       "{}{}{}{}",
-                       termion::cursor::Goto(1, 1),
-                       sixel::begin(),
-                       sixel::from(memory, width, height, true),
-                       sixel::end())
-                    .unwrap();
+                output.write(self.display.as_slice()).unwrap();
                 output.flush().unwrap();
             }
             None => {}
@@ -479,6 +545,18 @@ impl<'a> Write for Computer<'a> {
 
     fn flush(&mut self) -> io::Result<()> {
         Ok(())
+    }
+}
+
+impl<'a> Read for Computer<'a> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        use std::cmp;
+
+        let amt = cmp::min(self.display.len() - self.read_position, buf.len());
+        let a = &self.display[self.read_position..(self.read_position + amt)];
+        buf[..amt].copy_from_slice(a);
+        self.read_position += amt;
+        Ok(amt)
     }
 }
 
