@@ -219,9 +219,9 @@ use std::string::String;
 use std::collections::HashMap;
 
 pub struct Compiler {
-    pub lines: Vec<String>,
-    pub instructions: Vec<String>,
-    pub labels: HashMap<String, u32>,
+    lines: Vec<String>,
+    instructions: Vec<String>,
+    labels: HashMap<String, u32>,
     pub bytecodes: Vec<u32>,
 }
 
