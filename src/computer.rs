@@ -4,12 +4,13 @@ use termion;
 
 use super::sixel;
 use std::io::{self, Read, Write, Cursor};
+use std::marker::Send;
 use std::vec::Vec;
 
 pub struct Computer<'a> {
     memory: Vec<u32>,
     counter: u32,
-    input: Option<&'a mut (Read + 'a)>,
+    input: Option<Box<Read + Send>>,
     output: Option<&'a mut (Write + 'a)>,
     keyboard: Option<u8>,
     display_address: u32,
@@ -64,14 +65,13 @@ impl<'a> Computer<'a> {
     /// use chifir::computer::Computer;
     /// use std::io::{Cursor, Write};
     ///
-    /// let mut input = Cursor::new(vec![0x8, 0x71]);
+    /// let input = Box::new(Cursor::new(vec![0x8, 0x71]));
     ///
-    /// let mut computer  = Computer::new();
+    /// let mut computer  = Computer::new().input(input);
     /// computer.load(vec![
     ///     0xf, 0x2, 0x0, 0x0
     /// ]);
     ///
-    /// computer.input(&mut input);
     /// computer.step();
     ///
     /// assert_eq!([0xf, 0x2, 0x71, 0x0], computer.dump());
@@ -95,8 +95,9 @@ impl<'a> Computer<'a> {
     ///
     /// assert_eq!([0xf, 0x2, 0x71, 0x0], computer.dump());
     /// ```
-    pub fn input(&mut self, input: &'a mut Read) {
+    pub fn input(mut self, input: Box<Read + Send>) -> Self {
         self.input = Some(input);
+        self
     }
 
     /// Binds a writer for getting display output.
@@ -870,10 +871,9 @@ mod tests {
     #[test]
     fn it_runs_opcode_15_non_blocking() {
         // Get one character from the keyboard and store it into M[A]
-        let mut input = Cursor::new(vec![8, 10, 13, 32]);
+        let input = Box::new(Cursor::new(vec![8, 10, 13, 32]));
 
-        let mut m = Computer::new();
-        m.input(&mut input);
+        let mut m = Computer::new().input(input);
         m.load_from_slice(&[15, 1, 0, 0]);
 
         // Move the program counter after reading.

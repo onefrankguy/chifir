@@ -146,7 +146,6 @@ fn main() {
       brk
     ");
 
-    let mut stdin = async_stdin();
 
     write!(stdout,
            "{}{}",
@@ -155,8 +154,9 @@ fn main() {
         .unwrap();
     stdout.flush().unwrap();
 
-    let mut vm = chifir::computer::Computer::new();
-    vm.input(&mut stdin);
+    let stdin = Box::new(async_stdin());
+
+    let mut vm = chifir::computer::Computer::new().input(stdin);
     vm.output(&mut stdout);
     vm.load(compiler.bytecodes);
 
