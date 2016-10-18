@@ -31,10 +31,10 @@ impl Computer {
     /// ```
     /// use chifir::computer::Computer;
     ///
-    /// let computer = Computer::new();
+    /// let mut computer = Computer::new();
     ///
     /// assert_eq!([0; 0], computer.dump());
-    /// assert_eq!(0, computer.position());
+    /// assert_eq!(0, computer.next());
     /// ```
     pub fn new() -> Self {
         Computer {
@@ -157,30 +157,6 @@ impl Computer {
         self
     }
 
-    /// Returns the current location of the program counter.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use chifir::computer::Computer;
-    ///
-    /// let mut computer = Computer::new();
-    ///
-    /// computer.load(vec![
-    ///     0xd, 0x0, 0x0, 0x0,  // drw
-    ///     0x1, 0x6, 0x0, 0x0,  // lpc /2
-    /// ]);
-    ///
-    /// assert_eq!(computer.position(), 0);
-    ///
-    /// computer.step();
-    ///
-    /// assert_eq!(computer.position(), 4);
-    /// ```
-    pub fn position(&self) -> u32 {
-        self.counter
-    }
-
     /// Returns the next opcode that will be executed.
     ///
     /// # Examples
@@ -213,20 +189,12 @@ impl Computer {
     /// let mut computer = Computer::new();
     ///
     /// computer.load(vec![
-    ///     1, 2, 4, 0
+    ///     1, 2, 4, 0,  // PC <- M[2]
+    ///     2, 7, 3, 0,  // If M[3] = 0, then PC <- M[7]
     /// ]);
     ///
-    /// assert_eq!([1, 2, 4, 0], computer.dump());
-    ///
     /// computer.step();
-    /// computer.step();
-    ///
-    /// assert_eq!(4, computer.position());
-    ///
-    /// computer.load(vec![]);
-    ///
-    /// assert_eq!([0; 0], computer.dump());
-    /// assert_eq!(0, computer.position());
+    /// assert_eq!(2, computer.next());
     /// ```
     pub fn load<I: IntoIterator<Item = u32>>(&mut self, iter: I) {
         self.memory.clear();
@@ -246,20 +214,12 @@ impl Computer {
     /// let mut computer = Computer::new();
     ///
     /// computer.load_from_slice(&[
-    ///     1, 2, 4, 0
+    ///     1, 2, 4, 0,  // PC <- M[2]
+    ///     2, 7, 3, 0,  // If M[3] = 0, then PC <- M[7]
     /// ]);
     ///
-    /// assert_eq!([1, 2, 4, 0], computer.dump());
-    ///
     /// computer.step();
-    /// computer.step();
-    ///
-    /// assert_eq!(4, computer.position());
-    ///
-    /// computer.load(vec![]);
-    ///
-    /// assert_eq!([0; 0], computer.dump());
-    /// assert_eq!(0, computer.position());
+    /// assert_eq!(2, computer.next());
     /// ```
     pub fn load_from_slice(&mut self, slice: &[u32]) {
         self.memory.clear();
@@ -584,9 +544,9 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[0]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
     }
 
     #[test]
@@ -595,9 +555,9 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[1, 4, 0, 0, 2]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
-        assert_eq!(2, m.position());
+        assert_eq!(2, m.counter);
     }
 
     #[test]
@@ -606,9 +566,9 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[2, 4, 5, 0, 2, 0]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
-        assert_eq!(2, m.position());
+        assert_eq!(2, m.counter);
     }
 
     #[test]
@@ -617,9 +577,9 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[2, 4, 5, 0, 2, 1]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -628,10 +588,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[3, 4, 0, 0, 1]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([3, 4, 0, 0, 0], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -640,10 +600,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[4, 4, 5, 0, 6, 7]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([4, 4, 5, 0, 7, 7], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -652,10 +612,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[5, 4, 5, 0, 6, 7, 0, 8]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([5, 4, 5, 0, 8, 7, 0, 8], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -664,10 +624,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[6, 4, 5, 0, 8, 6, 7]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([6, 4, 5, 0, 8, 6, 8], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -676,10 +636,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[7, 4, 5, 6, 0, 11, 2]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([7, 4, 5, 6, 13, 11, 2], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -688,10 +648,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[7, 4, 5, 6, 1, u32::max_value(), 1]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([7, 4, 5, 6, 0, u32::max_value(), 1], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -700,10 +660,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[8, 4, 5, 6, 0, 11, 2]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([8, 4, 5, 6, 9, 11, 2], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -712,10 +672,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[8, 4, 5, 6, 1, 2, 11]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([8, 4, 5, 6, 4294967287, 2, 11], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -724,10 +684,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[9, 4, 5, 6, 0, 11, 2]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([9, 4, 5, 6, 22, 11, 2], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -736,10 +696,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[9, 4, 5, 6, 0, u32::max_value(), 2]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([9, 4, 5, 6, 4294967294, u32::max_value(), 2], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -748,10 +708,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[10, 4, 5, 6, 0, 11, 2]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([10, 4, 5, 6, 5, 11, 2], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -760,10 +720,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[10, 4, 5, 6, 1, 11, 0]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([10, 4, 5, 6, 0, 11, 0], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -772,10 +732,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[11, 4, 5, 6, 0, 11, 2]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([11, 4, 5, 6, 1, 11, 2], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -784,10 +744,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[11, 4, 5, 6, 1, 11, 0]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([11, 4, 5, 6, 0, 11, 0], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -796,10 +756,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[12, 4, 5, 6, 2, 8, 9]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([12, 4, 5, 6, 1, 8, 9], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -808,10 +768,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[12, 4, 5, 6, 2, 9, 8]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([12, 4, 5, 6, 0, 9, 8], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -820,10 +780,10 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[13, 4, 5, 6, 0, 0xfffffffe, 0xfffffffd]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
         assert_eq!([13, 4, 5, 6, 0x3, 0xfffffffe, 0xfffffffd], m.dump());
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -833,9 +793,9 @@ mod tests {
         m.load_from_slice(&[14, 0, 0, 0]);
 
         // Move the program counter after rendering.
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
 
         let mut buffer = Vec::new();
         m.read_to_end(&mut buffer).unwrap();
@@ -857,9 +817,9 @@ mod tests {
         m.load_from_slice(&[15, 1, 0, 0]);
 
         // Don't move the program counter if reading failed.
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
     }
 
     #[test]
@@ -871,9 +831,9 @@ mod tests {
         m.load_from_slice(&[15, 1, 0, 0]);
 
         // Move the program counter after reading.
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
 
         // Only save the last key pressed.
         assert_eq!([15, 32, 0, 0], m.dump());
@@ -885,9 +845,9 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[16, 0, 0, 0]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
     }
 
     #[test]
@@ -896,9 +856,9 @@ mod tests {
         let mut m = Computer::new();
         m.load_from_slice(&[17, 100, 640, 480]);
 
-        assert_eq!(0, m.position());
+        assert_eq!(0, m.counter);
         m.step();
-        assert_eq!(4, m.position());
+        assert_eq!(4, m.counter);
 
         assert_eq!(100, m.display_address);
         assert_eq!(640, m.display_width);
