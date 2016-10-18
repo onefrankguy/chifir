@@ -8,7 +8,7 @@ use std::io::{self, Write};
 
 fn main() {
     let stdout = io::stdout();
-    let mut stdout = stdout.lock().into_raw_mode().unwrap();
+    let mut stdout = Box::new(stdout.into_raw_mode().unwrap());
 
     let mut compiler = chifir::compiler::Compiler::new();
     compiler.parse("
@@ -156,8 +156,7 @@ fn main() {
 
     let stdin = Box::new(async_stdin());
 
-    let mut vm = chifir::computer::Computer::new().input(stdin);
-    vm.output(&mut stdout);
+    let mut vm = chifir::computer::Computer::new().input(stdin).output(stdout);
     vm.load(compiler.bytecodes);
 
     while vm.next() != 0 {

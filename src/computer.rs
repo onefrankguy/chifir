@@ -7,11 +7,11 @@ use std::io::{self, Read, Write, Cursor};
 use std::marker::Send;
 use std::vec::Vec;
 
-pub struct Computer<'a> {
+pub struct Computer {
     memory: Vec<u32>,
     counter: u32,
     input: Option<Box<Read + Send>>,
-    output: Option<&'a mut (Write + 'a)>,
+    output: Option<Box<Write + Send>>,
     keyboard: Option<u8>,
     display_address: u32,
     display_width: u32,
@@ -20,7 +20,7 @@ pub struct Computer<'a> {
     read_position: usize,
 }
 
-impl<'a> Computer<'a> {
+impl Computer {
     /// Create a new `Computer`.
     ///
     /// The computer will start without any memory. The program counter will
@@ -58,16 +58,15 @@ impl<'a> Computer<'a> {
     ///
     /// # Examples
     ///
-    /// Binding an input reader borrow a mutable reference, so the input must
-    /// outlive the computer.
+    /// A `Computer` can be constructed with an input reader.
     ///
     /// ```
     /// use chifir::computer::Computer;
-    /// use std::io::{Cursor, Write};
+    /// use std::io::Cursor;
     ///
-    /// let input = Box::new(Cursor::new(vec![0x8, 0x71]));
+    /// let stdin = Box::new(Cursor::new(vec![0x8, 0x71]));
     ///
-    /// let mut computer  = Computer::new().input(input);
+    /// let mut computer  = Computer::new().input(stdin);
     /// computer.load(vec![
     ///     0xf, 0x2, 0x0, 0x0
     /// ]);
@@ -77,7 +76,7 @@ impl<'a> Computer<'a> {
     /// assert_eq!([0xf, 0x2, 0x71, 0x0], computer.dump());
     /// ```
     ///
-    /// The computer can outlive input to the in memory keyboard.
+    /// The in memory keyboard can also be used directly.
     ///
     /// ```
     /// use chifir::computer::Computer;
@@ -106,26 +105,24 @@ impl<'a> Computer<'a> {
     ///
     /// # Examples
     ///
-    /// Binding an output writer borrow a mutable reference, so the output must
-    /// outlive the computer.
+    /// A `Computer` can be constructed with an output writer.
     ///
     /// ```
     /// use chifir::computer::Computer;
-    /// use std::io::{Cursor, Read};
+    /// use std::io::{Read, Cursor};
     ///
-    /// let mut output = Cursor::new(Vec::new());
+    /// let stdout = Box::new(Cursor::new(Vec::new()));
     ///
-    /// {
-    ///     let mut computer  = Computer::new();
-    ///     computer.load(vec![
-    ///         14, 0, 0, 0
-    ///     ]);
+    /// let mut computer  = Computer::new().output(stdout);
+    /// computer.load(vec![
+    ///     14, 0, 0, 0
+    /// ]);
     ///
-    ///     computer.output(&mut output);
-    ///     computer.step();
-    /// }
+    /// computer.step();
     ///
-    /// let output = output.get_ref();
+    /// let mut output = Vec::new();
+    ///
+    /// computer.read_to_end(&mut output).unwrap();
     ///
     /// // Cursor is moved to (1,1) when rendering output
     /// let move_cursor: [u8; 6] = [27, 91, 49, 59, 49, 72];
@@ -133,11 +130,11 @@ impl<'a> Computer<'a> {
     /// assert_eq!(move_cursor, output[0..6]);
     /// ```
     ///
-    /// The computer can outlive input to the in memory display.
+    /// The in memory display is populated even when no writer is connected.
     ///
     /// ```
     /// use chifir::computer::Computer;
-    /// use std::io::{Read, Cursor};
+    /// use std::io::Read;
     ///
     /// let mut computer = Computer::new();
     /// computer.load(vec![
@@ -155,8 +152,9 @@ impl<'a> Computer<'a> {
     ///
     /// assert_eq!(move_cursor, output[0..6]);
     /// ```
-    pub fn output(&mut self, output: &'a mut Write) {
+    pub fn output(mut self, output: Box<Write + Send>) -> Self {
         self.output = Some(output);
+        self
     }
 
     /// Returns the current location of the program counter.
@@ -544,7 +542,7 @@ impl<'a> Computer<'a> {
     }
 }
 
-impl<'a> Write for Computer<'a> {
+impl Write for Computer {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         match buf.last() {
             Some(byte) => {
@@ -563,7 +561,7 @@ impl<'a> Write for Computer<'a> {
     }
 }
 
-impl<'a> Read for Computer<'a> {
+impl Read for Computer {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         use std::cmp;
 
@@ -578,7 +576,7 @@ impl<'a> Read for Computer<'a> {
 #[cfg(test)]
 mod tests {
     use super::Computer;
-    use std::io::Cursor;
+    use std::io::{Read, Cursor};
 
     #[test]
     fn it_runs_opcode_0() {
@@ -831,20 +829,16 @@ mod tests {
     #[test]
     fn it_runs_opcode_14() {
         // Refresh the screen
-        let mut output = Cursor::new(Vec::new());
+        let mut m = Computer::new();
+        m.load_from_slice(&[14, 0, 0, 0]);
 
-        {
-            let mut m = Computer::new();
-            m.load_from_slice(&[14, 0, 0, 0]);
-            m.output(&mut output);
+        // Move the program counter after rendering.
+        assert_eq!(0, m.position());
+        m.step();
+        assert_eq!(4, m.position());
 
-            // Move the program counter after rendering.
-            assert_eq!(0, m.position());
-            m.step();
-            assert_eq!(4, m.position());
-        }
-
-        let buffer = output.get_ref();
+        let mut buffer = Vec::new();
+        m.read_to_end(&mut buffer).unwrap();
 
         // Move the cursor to (1,1).
         assert_eq!(&buffer[0..6], &[27, 91, 49, 59, 49, 72]);
