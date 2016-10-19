@@ -287,7 +287,7 @@ impl Computer {
         return self.memory[index];
     }
 
-    fn write(&mut self, index: u32, value: u32) {
+    fn store(&mut self, index: u32, value: u32) {
         let index = index as usize;
 
         if index >= self.memory.len() {
@@ -354,14 +354,14 @@ impl Computer {
             // M[A] <- PC
             3 => {
                 let counter = self.counter;
-                self.write(a, counter);
+                self.store(a, counter);
                 self.counter += 4;
             }
 
             // M[A] <- M[B]
             4 => {
                 let b = self.fetch(b);
-                self.write(a, b);
+                self.store(a, b);
                 self.counter += 4;
             }
 
@@ -369,7 +369,7 @@ impl Computer {
             5 => {
                 let b = self.fetch(b);
                 let b = self.fetch(b);
-                self.write(a, b);
+                self.store(a, b);
                 self.counter += 4;
             }
 
@@ -377,7 +377,7 @@ impl Computer {
             6 => {
                 let a = self.fetch(a);
                 let b = self.fetch(b);
-                self.write(b, a);
+                self.store(b, a);
                 self.counter += 4;
             }
 
@@ -385,7 +385,7 @@ impl Computer {
             7 => {
                 let b = self.fetch(b);
                 let c = self.fetch(c);
-                self.write(a, b.wrapping_add(c));
+                self.store(a, b.wrapping_add(c));
                 self.counter += 4;
             }
 
@@ -393,7 +393,7 @@ impl Computer {
             8 => {
                 let b = self.fetch(b);
                 let c = self.fetch(c);
-                self.write(a, b.wrapping_sub(c));
+                self.store(a, b.wrapping_sub(c));
                 self.counter += 4;
             }
 
@@ -401,7 +401,7 @@ impl Computer {
             9 => {
                 let b = self.fetch(b);
                 let c = self.fetch(c);
-                self.write(a, b.wrapping_mul(c));
+                self.store(a, b.wrapping_mul(c));
                 self.counter += 4;
             }
 
@@ -410,9 +410,9 @@ impl Computer {
                 let b = self.fetch(b);
                 let c = self.fetch(c);
                 if c > 0 {
-                    self.write(a, b / c);
+                    self.store(a, b / c);
                 } else {
-                    self.write(a, 0);
+                    self.store(a, 0);
                 }
                 self.counter += 4;
             }
@@ -422,9 +422,9 @@ impl Computer {
                 let b = self.fetch(b);
                 let c = self.fetch(c);
                 if c > 0 {
-                    self.write(a, b % c);
+                    self.store(a, b % c);
                 } else {
-                    self.write(a, 0);
+                    self.store(a, 0);
                 }
                 self.counter += 4;
             }
@@ -434,9 +434,9 @@ impl Computer {
                 let b = self.fetch(b);
                 let c = self.fetch(c);
                 if b < c {
-                    self.write(a, 1);
+                    self.store(a, 1);
                 } else {
-                    self.write(a, 0);
+                    self.store(a, 0);
                 }
                 self.counter += 4;
             }
@@ -445,7 +445,7 @@ impl Computer {
             13 => {
                 let b = self.fetch(b);
                 let c = self.fetch(c);
-                self.write(a, !(b & c));
+                self.store(a, !(b & c));
                 self.counter += 4;
             }
 
@@ -476,7 +476,7 @@ impl Computer {
 
                 match result {
                     Some(byte) => {
-                        self.write(a, byte as u32);
+                        self.store(a, byte as u32);
                         self.counter += 4;
                     }
                     _ => {}
