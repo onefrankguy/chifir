@@ -31,7 +31,7 @@ impl Computer {
     /// ```
     /// use chifir::computer::Computer;
     ///
-    /// let mut computer = Computer::new();
+    /// let computer = Computer::new();
     ///
     /// assert_eq!([0; 0], computer.dump());
     /// assert_eq!(0, computer.next());
@@ -172,9 +172,8 @@ impl Computer {
     ///
     /// assert_eq!(computer.next(), 0x1);
     /// ```
-    pub fn next(&mut self) -> u32 {
-        let counter = self.counter;
-        self.fetch(counter)
+    pub fn next(&self) -> u32 {
+        *self.memory.get(self.counter as usize).unwrap_or(&0)
     }
 
     /// Copies the elements from `iter` into memory.
