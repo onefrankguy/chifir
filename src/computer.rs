@@ -174,7 +174,7 @@ impl Computer {
     /// ```
     pub fn next(&mut self) -> u32 {
         let counter = self.counter;
-        self.read(counter)
+        self.fetch(counter)
     }
 
     /// Copies the elements from `iter` into memory.
@@ -270,14 +270,14 @@ impl Computer {
     /// ```
     pub fn step(&mut self) {
         let counter = self.counter;
-        let opcode = self.read(counter);
-        let a = self.read(counter + 1);
-        let b = self.read(counter + 2);
-        let c = self.read(counter + 3);
+        let opcode = self.fetch(counter);
+        let a = self.fetch(counter + 1);
+        let b = self.fetch(counter + 2);
+        let c = self.fetch(counter + 3);
         self.exec(opcode, a, b, c);
     }
 
-    fn read(&mut self, index: u32) -> u32 {
+    fn fetch(&mut self, index: u32) -> u32 {
         let index = index as usize;
 
         if index >= self.memory.len() {
@@ -302,8 +302,8 @@ impl Computer {
         let height = self.display_height;
         let start = self.display_address;
         let end = start + (width * height);
-        self.read(start);
-        self.read(end);
+        self.fetch(start);
+        self.fetch(end);
 
         let width = width as usize;
         let height = height as usize;
@@ -339,13 +339,13 @@ impl Computer {
 
             // PC <- M[A]
             1 => {
-                self.counter = self.read(a);
+                self.counter = self.fetch(a);
             }
 
             // If M[B] = 0, then PC <- M[A]
             2 => {
-                if 0 == self.read(b) {
-                    self.counter = self.read(a);
+                if 0 == self.fetch(b) {
+                    self.counter = self.fetch(a);
                 } else {
                     self.counter += 4;
                 }
@@ -360,55 +360,55 @@ impl Computer {
 
             // M[A] <- M[B]
             4 => {
-                let b = self.read(b);
+                let b = self.fetch(b);
                 self.write(a, b);
                 self.counter += 4;
             }
 
             // M[A] <- M[M[B]]
             5 => {
-                let b = self.read(b);
-                let b = self.read(b);
+                let b = self.fetch(b);
+                let b = self.fetch(b);
                 self.write(a, b);
                 self.counter += 4;
             }
 
             // M[M[B]] <- M[A]
             6 => {
-                let a = self.read(a);
-                let b = self.read(b);
+                let a = self.fetch(a);
+                let b = self.fetch(b);
                 self.write(b, a);
                 self.counter += 4;
             }
 
             // M[A] <- M[B] + M[C]
             7 => {
-                let b = self.read(b);
-                let c = self.read(c);
+                let b = self.fetch(b);
+                let c = self.fetch(c);
                 self.write(a, b.wrapping_add(c));
                 self.counter += 4;
             }
 
             // M[A] <- M[B] - M[C]
             8 => {
-                let b = self.read(b);
-                let c = self.read(c);
+                let b = self.fetch(b);
+                let c = self.fetch(c);
                 self.write(a, b.wrapping_sub(c));
                 self.counter += 4;
             }
 
             // M[A] <- M[B] * M[C]
             9 => {
-                let b = self.read(b);
-                let c = self.read(c);
+                let b = self.fetch(b);
+                let c = self.fetch(c);
                 self.write(a, b.wrapping_mul(c));
                 self.counter += 4;
             }
 
             // M[A] <- M[B] / M[C]
             10 => {
-                let b = self.read(b);
-                let c = self.read(c);
+                let b = self.fetch(b);
+                let c = self.fetch(c);
                 if c > 0 {
                     self.write(a, b / c);
                 } else {
@@ -419,8 +419,8 @@ impl Computer {
 
             // M[A] <- M[B] % M[C]
             11 => {
-                let b = self.read(b);
-                let c = self.read(c);
+                let b = self.fetch(b);
+                let c = self.fetch(c);
                 if c > 0 {
                     self.write(a, b % c);
                 } else {
@@ -431,8 +431,8 @@ impl Computer {
 
             // If M[B] < M[C], then M[A] <- 1, else M[A] <- 0
             12 => {
-                let b = self.read(b);
-                let c = self.read(c);
+                let b = self.fetch(b);
+                let c = self.fetch(c);
                 if b < c {
                     self.write(a, 1);
                 } else {
@@ -443,8 +443,8 @@ impl Computer {
 
             // MA[A] <- NOT(M[B] AND M[C])
             13 => {
-                let b = self.read(b);
-                let c = self.read(c);
+                let b = self.fetch(b);
+                let c = self.fetch(c);
                 self.write(a, !(b & c));
                 self.counter += 4;
             }
