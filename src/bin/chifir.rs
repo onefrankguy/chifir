@@ -11,7 +11,7 @@ fn main() {
     let mut stdout = Box::new(stdout.into_raw_mode().unwrap());
 
     let mut compiler = chifir::compiler::Compiler::new();
-    compiler.parse("
+    write!(compiler, "{}", "
     ; Configure a 16x16 pixel display
     cfv display 10 10
 
@@ -144,7 +144,8 @@ fn main() {
 
     display:
       brk
-    ");
+    ").unwrap();
+    compiler.compile();
 
 
     write!(stdout,
