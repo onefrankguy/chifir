@@ -16,49 +16,15 @@
 //! 2 b 2 f
 //! 1 e 0 0
 //! ").unwrap();
-//! compiler.compile();
 //!
-//! let mut computer = Computer::new();
-//! computer.load(compiler.bytecodes);
+//! let bytecodes = compiler.compile().unwrap();
 //!
-//! // The first instruction will be executed.
-//! assert_eq!(computer.next(), 0xf);
-//!
-//! // Input is empty, so the program won't advance.
-//! computer.step();
-//! assert_eq!(computer.next(), 0xf);
-//!
-//! // Put 0x71 into the input, as if "q" was pressed.
-//! computer.write(&[0x71]).unwrap();
-//!
-//! // 0x71 will be read from input.
-//! computer.step();
-//! assert_eq!(computer.next(), 0x8);
-//!
-//! // 0x3 will be subtracted from 0x71.
-//! computer.step();
-//! assert_eq!(computer.next(), 0x2);
-//!
-//! // 0x71 minus 0x3 is 0x6e. 0x6e is not zero so the program continues.
-//! computer.step();
-//! assert_eq!(computer.next(), 0x1);
-//!
-//! // The program returns to the beginning.
-//! computer.step();
-//! assert_eq!(computer.next(), 0xf);
-//!
-//! // Put 0x3 into the input, as if "Ctrl+C" was pressed.
-//! computer.write(&[0x03]).unwrap();
-//!
-//! // Run the read, subtract, and check loop again.
-//! computer.step();
-//! computer.step();
-//! computer.step();
-//!
-//! // This time, 0x3 minus 0x3 is 0x0, so the program halts.
-//! assert_eq!(computer.next(), 0x0);
-//! computer.step();
-//! assert_eq!(computer.next(), 0x0);
+//! assert_eq!([
+//! 0xf, 0x2, 0x0, 0x3,
+//! 0x8, 0x2, 0x2, 0x3,
+//! 0x2, 0xb, 0x2, 0xf,
+//! 0x1, 0xe, 0x0, 0x0
+//! ], bytecodes);
 //! ```
 //!
 //! # Comments
@@ -78,14 +44,15 @@
 //! 2 b 2 f  ; If M[2] equals 0, then set PC to M[b]
 //! 1 e 0 0  ; Else, set PC to M[e]
 //! ").unwrap();
-//! compiler.compile();
 //!
-//! assert_eq!(compiler.bytecodes, vec![
+//! let bytecodes = compiler.compile().unwrap();
+//!
+//! assert_eq!([
 //! 0xf, 0x2, 0x0, 0x3,
 //! 0x8, 0x2, 0x2, 0x3,
 //! 0x2, 0xb, 0x2, 0xf,
 //! 0x1, 0xe, 0x0, 0x0
-//! ]);
+//! ], bytecodes);
 //! ```
 //!
 //! The term **PC** in the comments refers to the program counter. Chifir starts
@@ -112,14 +79,15 @@
 //! beq b 2 f  ; If M[2] equals 0, then set PC to M[b]
 //! lpc e 0 0  ; Else, set PC to M[e]
 //! ").unwrap();
-//! compiler.compile();
 //!
-//! assert_eq!(compiler.bytecodes, vec![
+//! let bytecodes = compiler.compile().unwrap();
+//!
+//! assert_eq!([
 //! 0xf, 0x2, 0x0, 0x3,
 //! 0x8, 0x2, 0x2, 0x3,
 //! 0x2, 0xb, 0x2, 0xf,
 //! 0x1, 0xe, 0x0, 0x0
-//! ]);
+//! ], bytecodes);
 //! ```
 //!
 //! [Table 1](#table-1) has a full list of opcodes and their abbreviations.
@@ -154,15 +122,16 @@
 //! exit:
 //!   brk 0 0 0
 //! ").unwrap();
-//! compiler.compile();
 //!
-//! assert_eq!(compiler.bytecodes, vec![
+//! let bytecodes = compiler.compile().unwrap();
+//!
+//! assert_eq!([
 //! 0xf, 0x2, 0x0, 0x3,
 //! 0x8, 0x2, 0x2, 0x3,
 //! 0x2, 0xb, 0x2, 0x10,
 //! 0x1, 0xe, 0x0, 0x0,
 //! 0x0, 0x0, 0x0, 0x0
-//! ]);
+//! ], bytecodes);
 //! ```
 //!
 //! Labels can be referenced before they're defined. This makes them useful for
@@ -192,9 +161,10 @@
 //! ctrl-c:
 //!   lea 18 1b 3
 //! ").unwrap();
-//! compiler.compile();
 //!
-//! assert_eq!(compiler.bytecodes, vec![
+//! let bytecodes = compiler.compile().unwrap();
+//!
+//! assert_eq!([
 //! 0xf, 0x14, 0x0, 0x0,
 //! 0x8, 0x14, 0x14, 0x18,
 //! 0x2, 0xb, 0x14, 0x10,
@@ -202,7 +172,7 @@
 //! 0x0, 0x0, 0x0, 0x0,
 //! 0x10, 0x0, 0x0, 0x0,
 //! 0x4, 0x18, 0x1b, 0x3
-//! ]);
+//! ], bytecodes);
 //! ```
 //!
 //!
@@ -232,7 +202,7 @@
 //! |17    |`cfv`       |Configure display at M[A] with width B and height C      |
 
 use std::vec::Vec;
-use std::string::String;
+use std::string::{self, String};
 use std::collections::HashMap;
 use std::io::{self, Write};
 
@@ -241,7 +211,7 @@ pub struct Compiler {
     lines: Vec<String>,
     instructions: Vec<String>,
     labels: HashMap<String, u32>,
-    pub bytecodes: Vec<u32>,
+    bytecodes: Vec<u32>,
 }
 
 impl Compiler {
@@ -255,16 +225,13 @@ impl Compiler {
         }
     }
 
-    pub fn compile(&mut self) {
-        match String::from_utf8(self.assembly.to_vec()) {
-            Ok(assembly) => {
-                self.split_lines(assembly.as_str());
-                self.strip_comments();
-                self.compile_labels();
-                self.compile_bytecodes();
-            },
-            _ => {}
-        }
+    pub fn compile(&mut self) -> Result<&[u32], CompilerError> {
+        let assembly = try!(String::from_utf8(self.assembly.to_vec()).map_err(CompilerError::FromUtf8Error));
+        self.split_lines(assembly.as_str());
+        self.strip_comments();
+        self.compile_labels();
+        self.compile_bytecodes();
+        Ok(self.bytecodes.as_slice())
     }
 
     // Transform an opcode into a bytecode. Undefined opcodes, or thoses that
@@ -439,6 +406,11 @@ impl Write for Compiler {
     }
 }
 
+#[derive(Debug)]
+pub enum CompilerError {
+    FromUtf8Error(string::FromUtf8Error),
+}
+
 #[cfg(test)]
 mod tests {
     use super::Compiler;
@@ -449,7 +421,7 @@ mod tests {
     fn it_splits_lines_by_line_feed() {
         let mut compiler = Compiler::new();
         compiler.write(b"0 0 0 0\n0 0 0 0").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
     }
@@ -458,7 +430,7 @@ mod tests {
     fn it_splits_lines_by_vertical_tab() {
         let mut compiler = Compiler::new();
         compiler.write(b"0 0 0 0\x0B0 0 0 0").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
     }
@@ -467,7 +439,7 @@ mod tests {
     fn it_splits_lines_by_form_feed() {
         let mut compiler = Compiler::new();
         compiler.write(b"0 0 0 0\x0C0 0 0 0").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
     }
@@ -476,7 +448,7 @@ mod tests {
     fn it_splits_lines_by_carriage_return() {
         let mut compiler = Compiler::new();
         compiler.write(b"0 0 0 0\r0 0 0 0").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
     }
@@ -485,7 +457,7 @@ mod tests {
     fn it_splits_lines_by_carriage_return_line_feed() {
         let mut compiler = Compiler::new();
         compiler.write(b"0 0 0 0\r\n0 0 0 0").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
     }
@@ -494,7 +466,7 @@ mod tests {
     fn it_splits_lines_by_next_line() {
         let mut compiler = Compiler::new();
         write!(compiler, "{}", "0 0 0 0\u{0085}0 0 0 0").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
     }
@@ -503,7 +475,7 @@ mod tests {
     fn it_splits_lines_by_line_separator() {
         let mut compiler = Compiler::new();
         write!(compiler, "{}", "0 0 0 0\u{2028}0 0 0 0").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
     }
@@ -512,7 +484,7 @@ mod tests {
     fn it_splits_lines_by_paragraph_separator() {
         let mut compiler = Compiler::new();
         write!(compiler, "{}", "0 0 0 0\u{2029}0 0 0 0").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
     }
@@ -521,7 +493,7 @@ mod tests {
     fn it_ignors_trailing_separators() {
         let mut compiler = Compiler::new();
         compiler.write(b"0 0 0 0\r\n0 0 0 0\r\n").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
     }
@@ -530,7 +502,7 @@ mod tests {
     fn it_strips_single_line_comments() {
         let mut compiler = Compiler::new();
         compiler.write(b"; single line comment\n0 0 0 0\n").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
         assert_eq!(compiler.instructions.len(), 1);
@@ -540,7 +512,7 @@ mod tests {
     fn it_strips_single_line_comments_starting_with_spaces() {
         let mut compiler = Compiler::new();
         compiler.write(b" ; single line comment\n0 0 0 0\n").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
         assert_eq!(compiler.instructions.len(), 1);
@@ -550,7 +522,7 @@ mod tests {
     fn it_strips_single_line_comments_starting_with_tabs() {
         let mut compiler = Compiler::new();
         compiler.write(b"\t; single line comment\n0 0 0 0\n").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 2);
         assert_eq!(compiler.instructions.len(), 1);
@@ -560,7 +532,7 @@ mod tests {
     fn it_strips_inline_comments() {
         let mut compiler = Compiler::new();
         compiler.write(b"0 0 0 0; inline comment\n").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 1);
         assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
@@ -570,7 +542,7 @@ mod tests {
     fn it_strips_inline_comments_starting_with_spaces() {
         let mut compiler = Compiler::new();
         compiler.write(b"0 0 0 0 ; inline comment\n").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 1);
         assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
@@ -580,7 +552,7 @@ mod tests {
     fn it_strips_inline_comments_starting_with_tabs() {
         let mut compiler = Compiler::new();
         compiler.write(b"0 0 0 0\t; inline comment\n").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 1);
         assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
@@ -590,7 +562,7 @@ mod tests {
     fn it_trims_spaces_from_instructions() {
         let mut compiler = Compiler::new();
         compiler.write(b" 0 0 0 0 ").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 1);
         assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
@@ -600,7 +572,7 @@ mod tests {
     fn it_trims_tabs_from_instructions() {
         let mut compiler = Compiler::new();
         compiler.write(b"\t0 0 0 0\t").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.lines.len(), 1);
         assert_eq!(compiler.instructions, vec!["0 0 0 0"]);
@@ -610,7 +582,7 @@ mod tests {
     fn it_compiles_addresses_for_labels() {
         let mut compiler = Compiler::new();
         compiler.write(b"first:\nsecond:\n0 0 0 0\nthird:").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         let mut labels = HashMap::new();
         labels.insert("first".to_string(), 0);
@@ -624,7 +596,7 @@ mod tests {
     fn it_lets_the_last_label_win() {
         let mut compiler = Compiler::new();
         compiler.write(b"label:\n0 0 0 0\nlabel:").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         let mut labels = HashMap::new();
         labels.insert("label".to_string(), 4);
@@ -636,7 +608,7 @@ mod tests {
     fn it_ignores_trailing_label_characters() {
         let mut compiler = Compiler::new();
         compiler.write(b"label:with bits\n0 0 0 0\nlabel:with bytes").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         let mut labels = HashMap::new();
         labels.insert("label".to_string(), 4);
@@ -648,7 +620,7 @@ mod tests {
     fn it_parses_hex_for_opcode_0() {
         let mut compiler = Compiler::new();
         compiler.write(b"0").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.bytecodes, vec![0x0, 0x0, 0x0, 0x0]);
     }
@@ -657,7 +629,7 @@ mod tests {
     fn it_parses_brk_as_opcode_0() {
         let mut compiler = Compiler::new();
         compiler.write(b"brk").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.bytecodes, vec![0x0, 0x0, 0x0, 0x0]);
     }
@@ -666,7 +638,7 @@ mod tests {
     fn it_parses_operand_a_as_hex() {
         let mut compiler = Compiler::new();
         compiler.write(b"brk f").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0x0, 0x0]);
     }
@@ -675,7 +647,7 @@ mod tests {
     fn it_parses_operand_a_as_a_label() {
         let mut compiler = Compiler::new();
         compiler.write(b"brk end\nend:").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.bytecodes, vec![0x0, 0x4, 0x0, 0x0]);
     }
@@ -684,7 +656,7 @@ mod tests {
     fn it_parses_operand_b_as_hex() {
         let mut compiler = Compiler::new();
         compiler.write(b"brk f f").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0xf, 0x0]);
     }
@@ -693,7 +665,7 @@ mod tests {
     fn it_parses_operand_b_as_a_label() {
         let mut compiler = Compiler::new();
         compiler.write(b"brk f end\nend:").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0x4, 0x0]);
     }
@@ -702,7 +674,7 @@ mod tests {
     fn it_parses_operand_c_as_hex() {
         let mut compiler = Compiler::new();
         compiler.write(b"brk f f f").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0xf, 0xf]);
     }
@@ -711,7 +683,7 @@ mod tests {
     fn it_parses_operand_c_as_a_label() {
         let mut compiler = Compiler::new();
         compiler.write(b"brk f f end\nend:").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.bytecodes, vec![0x0, 0xf, 0xf, 0x4]);
     }
@@ -720,7 +692,7 @@ mod tests {
     fn it_parses_operands_as_relative_addresses() {
         let mut compiler = Compiler::new();
         compiler.write(b"nop\nadd /0 /5 /6").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.bytecodes,
                    vec![0x10, 0x0, 0x0, 0x0, 0x7, 0x4, 0x9, 0xa]);
@@ -736,7 +708,7 @@ mod tests {
         2 b 2 f  ; If M[2] equals 0, then set PC to M[b]
         1 e 0 0  ; Else, set PC to M[e]
         ").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         assert_eq!(compiler.bytecodes,
                    vec![
@@ -767,7 +739,7 @@ mod tests {
         ctrl-c:
           lea /0 /3 3
         ").unwrap();
-        compiler.compile();
+        compiler.compile().unwrap();
 
         let mut labels = HashMap::new();
         labels.insert("check-ctrl-c".to_string(), 0);

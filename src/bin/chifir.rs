@@ -145,8 +145,8 @@ fn main() {
     display:
       brk
     ").unwrap();
-    compiler.compile();
 
+    let bytecodes = compiler.compile().unwrap();
 
     write!(stdout,
            "{}{}",
@@ -158,7 +158,7 @@ fn main() {
     let stdin = Box::new(async_stdin());
 
     let mut vm = chifir::computer::Computer::new().input(stdin).output(stdout);
-    vm.load(compiler.bytecodes);
+    vm.load_from_slice(bytecodes);
 
     while vm.next() != 0 {
         vm.step();
