@@ -419,6 +419,14 @@ mod tests {
     use std::io::Write;
 
     #[test]
+    fn it_returns_an_error_when_compiling_invalid_utf8() {
+        let mut compiler = Compiler::new();
+        compiler.write(&[0, 159, 146, 150]).unwrap();
+
+        assert!(compiler.compile().is_err());
+    }
+
+    #[test]
     fn it_splits_lines_by_line_feed() {
         let mut compiler = Compiler::new();
         compiler.write(b"0 0 0 0\n0 0 0 0").unwrap();
