@@ -29,9 +29,9 @@ pub fn from(memory: &[u32], width: usize, height: usize, border: bool) -> String
             for y in 0..6 {
                 let offset = x + ((row + y) * width);
                 if offset < memory.len() {
-                  if memory[offset] > 0 {
-                      byte = byte | (1 << y);
-                  }
+                    if memory[offset] > 0 {
+                        byte = byte | (1 << y);
+                    }
                 }
             }
 

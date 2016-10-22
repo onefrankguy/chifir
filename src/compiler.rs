@@ -226,7 +226,8 @@ impl Compiler {
     }
 
     pub fn compile(&mut self) -> Result<&[u32], CompilerError> {
-        let assembly = try!(String::from_utf8(self.assembly.to_vec()).map_err(CompilerError::FromUtf8Error));
+        let assembly = try!(String::from_utf8(self.assembly.to_vec())
+            .map_err(CompilerError::FromUtf8Error));
         self.split_lines(assembly.as_str());
         self.strip_comments();
         self.compile_labels();
@@ -707,7 +708,8 @@ mod tests {
         8 2 2 3  ; Subtract M[3] from M[2] and store the result in M[2]
         2 b 2 f  ; If M[2] equals 0, then set PC to M[b]
         1 e 0 0  ; Else, set PC to M[e]
-        ").unwrap();
+        ")
+            .unwrap();
         compiler.compile().unwrap();
 
         assert_eq!(compiler.bytecodes,
@@ -738,7 +740,8 @@ mod tests {
 
         ctrl-c:
           lea /0 /3 3
-        ").unwrap();
+        ")
+            .unwrap();
         compiler.compile().unwrap();
 
         let mut labels = HashMap::new();
